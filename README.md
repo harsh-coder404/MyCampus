@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MyCampus (Minor Project)
 
 MyCampus is a full-stack academic app prototype with:
