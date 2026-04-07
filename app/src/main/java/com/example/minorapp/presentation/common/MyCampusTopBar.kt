@@ -24,8 +24,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -55,6 +57,30 @@ fun MyCampusTopBar(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var subjectsExpanded by remember { mutableStateOf(false) }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
+
+    if (showLogoutConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirmation = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutConfirmation = false
+                        onLogoutClick()
+                    }
+                ) {
+                    Text("Logout", color = Color(0xFFB42318))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     TopAppBar(
         title = {
@@ -142,7 +168,7 @@ fun MyCampusTopBar(
                         text = { Text("Logout", color = Color(0xFFB42318)) },
                         onClick = {
                             expanded = false
-                            onLogoutClick()
+                            showLogoutConfirmation = true
                         },
                         leadingIcon = {
                             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color(0xFFB42318))

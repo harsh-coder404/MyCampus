@@ -70,7 +70,8 @@ fun TasksScreen(
     onNavigateToDashboard: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToSummary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     val activeUploadTask = uiState.activeUploadTask
     var expanded by remember { mutableStateOf(false) }
@@ -344,7 +345,8 @@ fun TasksScreen(
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri,
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         bottomBar = {

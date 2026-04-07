@@ -14,8 +14,7 @@ fun StudentDashboardRoute(
     onProfileClick: () -> Unit = {},
     onAttendanceClick: () -> Unit = {},
     onTasksClick: () -> Unit = {},
-    onSummaryClick: () -> Unit = {},
-    onProfessorTestClick: () -> Unit = {}
+    onSummaryClick: () -> Unit = {}
 ) {
     val dashboardRepository = remember { DashboardRepository(BuildConfig.AUTH_BASE_URL) }
     val viewModel: StudentDashboardViewModel = viewModel(
@@ -30,7 +29,6 @@ fun StudentDashboardRoute(
         onProfileClick = onProfileClick,
         onAttendanceClick = onAttendanceClick,
         onTasksClick = onTasksClick,
-        onSummaryClick = onSummaryClick,
-        onProfessorTestClick = onProfessorTestClick
+        onSummaryClick = onSummaryClick
     )
 }

@@ -13,11 +13,14 @@ class SessionManager(context: Context) {
         rememberFor30Days: Boolean,
         accessToken: String,
         refreshToken: String,
+        email: String,
         username: String? = null,
         branch: String? = null,
         batch: String? = null
     ) {
         val loginTime = System.currentTimeMillis()
+        val resolvedUsername = username?.trim()?.takeIf { it.isNotBlank() }
+            ?: deriveDisplayNameFromEmail(email)
 
         prefs.edit()
             .putBoolean(KEY_IS_LOGGED_IN, true)
@@ -26,9 +29,10 @@ class SessionManager(context: Context) {
             .putString(KEY_USER_ROLE, role.name)
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
+            .putString(KEY_EMAIL, email)
             .apply()
 
-        saveUsernameForRole(role, username)
+        saveUsernameForRole(role, resolvedUsername)
         saveBranch(branch)
         saveBatch(batch)
     }
@@ -55,6 +59,8 @@ class SessionManager(context: Context) {
     fun getAccessToken(): String? = prefs.getString(KEY_ACCESS_TOKEN, null)
 
     fun getRefreshToken(): String? = prefs.getString(KEY_REFRESH_TOKEN, null)
+
+    fun getSavedEmail(): String? = prefs.getString(KEY_EMAIL, null)
 
     fun saveProfileImageUri(uri: String?) {
         if (uri == null) {
@@ -98,6 +104,12 @@ class SessionManager(context: Context) {
             UserRole.PROFESSOR -> KEY_USERNAME_PROFESSOR
         }
         return prefs.getString(key, null) ?: prefs.getString(KEY_USERNAME, null)
+    }
+
+    fun getPreferredDisplayName(role: UserRole): String? {
+        val savedRoleName = getSavedUsernameForRole(role)?.trim()?.takeIf { it.isNotBlank() }
+        if (savedRoleName != null) return savedRoleName
+        return deriveDisplayNameFromEmail(getSavedEmail())
     }
 
     fun saveBranch(branch: String?) {
@@ -162,6 +174,27 @@ class SessionManager(context: Context) {
 
     fun getTasksSubmissionSnapshot(): String? = prefs.getString(KEY_TASKS_SUBMISSION_SNAPSHOT, null)
 
+    private fun deriveDisplayNameFromEmail(email: String?): String? {
+        val localPart = email
+            ?.substringBefore('@')
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+
+        val words = localPart
+            .split('.', '_', '-')
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+
+        if (words.isEmpty()) return null
+
+        return words.joinToString(" ") { token ->
+            token.lowercase().replaceFirstChar { ch ->
+                if (ch.isLowerCase()) ch.titlecase() else ch.toString()
+            }
+        }
+    }
+
     companion object {
         private const val PREF_NAME = "mycampus_session"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
@@ -170,6 +203,7 @@ class SessionManager(context: Context) {
         private const val KEY_USER_ROLE = "user_role"
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
+        private const val KEY_EMAIL = "email"
         private const val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
         private const val KEY_USERNAME = "username"
         private const val KEY_USERNAME_STUDENT = "username_student"

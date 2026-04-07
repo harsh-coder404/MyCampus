@@ -1,5 +1,16 @@
 package com.example.minorapp.data.tasks
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 enum class TaskStatus {
     PENDING,
     COMPLETED
@@ -23,6 +34,162 @@ data class TaskData(
 
 interface TasksRepository {
     fun getTasks(): List<TaskData>
+
+    suspend fun fetchRemoteTasks(accessToken: String?): RemoteTasksSyncResult {
+        return RemoteTasksSyncResult.Failure("Remote sync not supported.")
+    }
+
+    suspend fun submitTask(accessToken: String?, taskId: String): TaskSubmissionSyncResult {
+        return TaskSubmissionSyncResult.Failure("Submission sync not supported.")
+    }
+}
+
+sealed class RemoteTasksSyncResult {
+    data class Success(val tasks: List<TaskData>) : RemoteTasksSyncResult()
+    data class Failure(val message: String) : RemoteTasksSyncResult()
+}
+
+sealed class TaskSubmissionSyncResult {
+    object Success : TaskSubmissionSyncResult()
+    data class Failure(val message: String) : TaskSubmissionSyncResult()
+}
+
+class BackendTasksRepository(
+    private val baseUrl: String,
+    private val fallback: TasksRepository = LocalTasksRepository()
+) : TasksRepository {
+    override fun getTasks(): List<TaskData> = fallback.getTasks()
+
+    override suspend fun fetchRemoteTasks(accessToken: String?): RemoteTasksSyncResult = withContext(Dispatchers.IO) {
+        if (accessToken.isNullOrBlank()) {
+            return@withContext RemoteTasksSyncResult.Failure("Missing access token.")
+        }
+
+        var connection: HttpURLConnection? = null
+        try {
+            val normalizedBaseUrl = if (baseUrl.endsWith('/')) baseUrl else "$baseUrl/"
+            val endpoint = URL("${normalizedBaseUrl}tasks/my")
+            connection = (endpoint.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 10_000
+                readTimeout = 10_000
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("Authorization", "Bearer $accessToken")
+            }
+
+            when (val statusCode = connection.responseCode) {
+                in 200..299 -> RemoteTasksSyncResult.Success(parseRemoteTasks(connection))
+                401 -> RemoteTasksSyncResult.Failure("Session expired. Please login again.")
+                else -> RemoteTasksSyncResult.Failure("Unable to load tasks ($statusCode).")
+            }
+        } catch (_: IOException) {
+            RemoteTasksSyncResult.Failure("Unable to reach server. Check connection and try again.")
+        } catch (_: Exception) {
+            RemoteTasksSyncResult.Failure("Tasks service is currently unavailable.")
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    override suspend fun submitTask(accessToken: String?, taskId: String): TaskSubmissionSyncResult = withContext(Dispatchers.IO) {
+        if (accessToken.isNullOrBlank()) {
+            return@withContext TaskSubmissionSyncResult.Failure("Missing access token.")
+        }
+
+        val taskIdLong = taskId.trim().takeIf { it.matches(Regex("\\d+")) }?.toLongOrNull()
+            ?: return@withContext TaskSubmissionSyncResult.Success
+
+        var connection: HttpURLConnection? = null
+        try {
+            val normalizedBaseUrl = if (baseUrl.endsWith('/')) baseUrl else "$baseUrl/"
+            val endpoint = URL("${normalizedBaseUrl}submissions")
+            connection = (endpoint.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 10_000
+                readTimeout = 10_000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("Authorization", "Bearer $accessToken")
+            }
+
+            val payload = JSONObject()
+                .put("taskId", taskIdLong)
+                .put("status", "SUBMITTED")
+                .toString()
+
+            connection.outputStream.use {
+                it.write(payload.toByteArray(Charsets.UTF_8))
+                it.flush()
+            }
+
+            when (connection.responseCode) {
+                in 200..299 -> TaskSubmissionSyncResult.Success
+                401 -> TaskSubmissionSyncResult.Failure("Session expired. Please login again.")
+                else -> TaskSubmissionSyncResult.Failure("Unable to submit task right now.")
+            }
+        } catch (_: IOException) {
+            TaskSubmissionSyncResult.Failure("Unable to reach server. Check connection and try again.")
+        } catch (_: Exception) {
+            TaskSubmissionSyncResult.Failure("Submission service is currently unavailable.")
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    private fun parseRemoteTasks(connection: HttpURLConnection): List<TaskData> {
+        val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
+        val root = JSONObject(responseBody)
+        val data = root.optJSONArray("data") ?: JSONArray()
+        val now = LocalDate.now()
+
+        return buildList {
+            for (index in 0 until data.length()) {
+                val item = data.optJSONObject(index) ?: continue
+                val id = item.optLong("id", -1L)
+                if (id <= 0L) continue
+
+                val title = item.optString("title").ifBlank { "Task" }
+                val description = item.optString("description").ifBlank { "No description provided." }
+                val deadlineText = item.optString("deadline")
+                val deadlineDate = runCatching { LocalDate.parse(deadlineText) }.getOrNull()
+                val sortKey = deadlineDate?.let { toSortKey(it) }
+
+                add(
+                    TaskData(
+                        id = id.toString(),
+                        title = title,
+                        description = description,
+                        status = TaskStatus.PENDING,
+                        isPriority = false,
+                        dateText = deadlineDate?.format(DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH))?.uppercase(Locale.ENGLISH)
+                            ?: deadlineText.ifBlank { "TBA" },
+                        dueText = deadlineDate?.toDueText(now),
+                        isDueSoon = deadlineDate?.isDueSoon(now) == true,
+                        deadlineSortKey = sortKey,
+                        issuedSortKey = now.let { toSortKey(it) }
+                    )
+                )
+            }
+        }
+    }
+
+    private fun toSortKey(date: LocalDate): Int = (date.year * 10000) + (date.monthValue * 100) + date.dayOfMonth
+
+    private fun LocalDate.isDueSoon(now: LocalDate): Boolean {
+        val days = java.time.temporal.ChronoUnit.DAYS.between(now, this)
+        return days in 0..1
+    }
+
+    private fun LocalDate.toDueText(now: LocalDate): String {
+        val days = java.time.temporal.ChronoUnit.DAYS.between(now, this)
+        return when {
+            days < 0 -> "OVERDUE"
+            days == 0L -> "DUE TODAY"
+            days == 1L -> "DUE TOMORROW"
+            else -> "DUE IN ${days} DAYS"
+        }
+    }
 }
 
 class LocalTasksRepository : TasksRepository {

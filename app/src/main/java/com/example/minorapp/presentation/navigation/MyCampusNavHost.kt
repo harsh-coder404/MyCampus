@@ -38,7 +38,7 @@ fun MyCampusNavHost(
             SplashRoute(
                 sessionManager = sessionManager,
                 onNavigateToLogin = navController::navigateToLogin,
-                onNavigateToDashboard = navController::navigateToDashboard
+                onNavigateToDashboard = navController::navigateToRoleDashboard
             )
         }
 
@@ -47,7 +47,7 @@ fun MyCampusNavHost(
                 sessionManager = sessionManager,
                 onNavigateToForgotPassword = navController::navigateToForgotPassword,
                 onNavigateToSignUp = navController::navigateToSignUp,
-                onNavigateToDashboard = navController::navigateToDashboard
+                onNavigateToDashboard = navController::navigateToRoleDashboard
             )
         }
 
@@ -117,8 +117,7 @@ fun MyCampusNavHost(
                     } else {
                         navController.navigateToSummary()
                     }
-                },
-                onProfessorTestClick = navController::navigateToProfessorDashboard
+                }
             )
         }
 
@@ -142,7 +141,11 @@ fun MyCampusNavHost(
                 onNavigateToDashboard = navController::navigateToProfessorDashboard,
                 onNavigateToTasks = navController::navigateToProfessorTasks,
                 onNavigateToSummary = navController::navigateToProfessorSummary,
-                onProfileClick = navController::navigateToProfessorProfile
+                onProfileClick = navController::navigateToProfessorProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -152,7 +155,11 @@ fun MyCampusNavHost(
                 onNavigateToDashboard = navController::navigateToProfessorDashboard,
                 onNavigateToAttendance = navController::navigateToProfessorAttendance,
                 onNavigateToSummary = navController::navigateToProfessorSummary,
-                onProfileClick = navController::navigateToProfessorProfile
+                onProfileClick = navController::navigateToProfessorProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -163,7 +170,11 @@ fun MyCampusNavHost(
                 onNavigateToAttendance = navController::navigateToProfessorAttendance,
                 onNavigateToTasks = navController::navigateToProfessorTasks,
                 onNavigateToLibrary = navController::navigateToProfessorLibrary,
-                onProfileClick = navController::navigateToProfessorProfile
+                onProfileClick = navController::navigateToProfessorProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -171,7 +182,11 @@ fun MyCampusNavHost(
             LibraryRoute(
                 sessionManager = sessionManager,
                 onBackClick = navController::navigateBackToProfessorSummaryFromLibrary,
-                onProfileClick = navController::navigateToProfessorProfile
+                onProfileClick = navController::navigateToProfessorProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -181,7 +196,11 @@ fun MyCampusNavHost(
                 onNavigateToDashboard = navController::navigateToDashboard,
                 onNavigateToTasks = navController::navigateToTasks,
                 onNavigateToSummary = navController::navigateToSummary,
-                onProfileClick = navController::navigateToProfile
+                onProfileClick = navController::navigateToProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -191,7 +210,11 @@ fun MyCampusNavHost(
                 onNavigateToDashboard = navController::navigateToDashboard,
                 onNavigateToAttendance = navController::navigateToAttendance,
                 onNavigateToSummary = navController::navigateToSummary,
-                onProfileClick = navController::navigateToProfile
+                onProfileClick = navController::navigateToProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -202,7 +225,11 @@ fun MyCampusNavHost(
                 onNavigateToAttendance = navController::navigateToAttendance,
                 onNavigateToTasks = navController::navigateToTasks,
                 onNavigateToLibrary = navController::navigateToLibrary,
-                onProfileClick = navController::navigateToProfile
+                onProfileClick = navController::navigateToProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -210,7 +237,11 @@ fun MyCampusNavHost(
             LibraryRoute(
                 sessionManager = sessionManager,
                 onBackClick = { navController.popBackStack() },
-                onProfileClick = navController::navigateToProfile
+                onProfileClick = navController::navigateToProfile,
+                onLogoutClick = {
+                    sessionManager.clearSession()
+                    navController.navigateToLoginFromDashboard()
+                }
             )
         }
 
@@ -247,8 +278,18 @@ fun MyCampusNavHost(
         ) { backStackEntry ->
             val requireCurrentPassword = backStackEntry.arguments?.getBoolean("requireCurrentPassword") ?: true
             val origin = backStackEntry.arguments?.getString("origin")
+            val resetEmail = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>(RESET_PASSWORD_EMAIL_KEY)
+                ?.also {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>(RESET_PASSWORD_EMAIL_KEY)
+                }
             ResetPasswordScreen(
+                sessionManager = sessionManager,
                 requireCurrentPassword = requireCurrentPassword,
+                resetEmail = resetEmail,
                 onBackClick = { navController.navigateAfterResetPassword(origin) },
                 onNavigateToForgotPassword = { navController.navigateToForgotPassword() },
                 onPasswordUpdated = { navController.navigateAfterResetPassword(origin) }

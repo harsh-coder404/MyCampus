@@ -9,16 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.BackHand
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -28,17 +20,9 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.SpanStyle
@@ -47,8 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
-import coil.compose.AsyncImage
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
@@ -60,17 +42,16 @@ fun SummaryScreen(
     onNavigateToAttendance: () -> Unit,
     onNavigateToTasks: () -> Unit,
     onNavigateToLibrary: () -> Unit,
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var subjectsExpanded by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri,
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         bottomBar = {

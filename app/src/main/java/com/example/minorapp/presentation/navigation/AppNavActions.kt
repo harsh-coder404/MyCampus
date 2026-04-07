@@ -1,8 +1,10 @@
 package com.example.minorapp.presentation.navigation
 
 import androidx.navigation.NavHostController
+import com.example.minorapp.domain.model.UserRole
 
 const val RESET_LINK_SENT_MESSAGE_KEY = "reset_link_sent_message"
+const val RESET_PASSWORD_EMAIL_KEY = "reset_password_email"
 
 fun NavHostController.navigateToLogin() {
     navigate(AppRoute.Login.route) {
@@ -13,6 +15,17 @@ fun NavHostController.navigateToLogin() {
 
 fun NavHostController.navigateToDashboard() {
     navigate(AppRoute.Dashboard.route) {
+        popUpTo(AppRoute.Splash.route) { inclusive = true }
+        launchSingleTop = true
+    }
+}
+
+fun NavHostController.navigateToRoleDashboard(role: UserRole) {
+    val destination = when (role) {
+        UserRole.PROFESSOR -> AppRoute.ProfessorDashboard.route
+        UserRole.STUDENT -> AppRoute.Dashboard.route
+    }
+    navigate(destination) {
         popUpTo(AppRoute.Splash.route) { inclusive = true }
         launchSingleTop = true
     }
@@ -138,7 +151,8 @@ fun NavHostController.navigateToForgotPassword() {
     }
 }
 
-fun NavHostController.navigateToResetPasswordFromForgotPassword() {
+fun NavHostController.navigateToResetPasswordFromForgotPassword(email: String) {
+    currentBackStackEntry?.savedStateHandle?.set(RESET_PASSWORD_EMAIL_KEY, email)
     navigate(
         AppRoute.ResetPassword.createRoute(
             requireCurrentPassword = false,
@@ -191,7 +205,7 @@ fun NavHostController.popBackToLoginFromResetLinkSent() {
 
 fun NavHostController.navigateToLoginFromDashboard() {
     navigate(AppRoute.Login.route) {
-        popUpTo(AppRoute.Dashboard.route) { inclusive = true }
+        popUpTo(graph.id) { inclusive = true }
         launchSingleTop = true
     }
 }

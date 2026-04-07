@@ -26,7 +26,8 @@ sealed class AuthResult {
 class AuthRepository(private val baseUrl: String) {
     suspend fun authenticate(
         email: String,
-        password: String
+        password: String,
+        selectedRole: UserRole
     ): AuthResult = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
 
@@ -46,6 +47,7 @@ class AuthRepository(private val baseUrl: String) {
             val payload = JSONObject()
                 .put("email", email)
                 .put("password", password)
+                .put("role", selectedRole.name)
                 .toString()
 
             connection.outputStream.use { output ->
@@ -56,6 +58,8 @@ class AuthRepository(private val baseUrl: String) {
             when (val statusCode = connection.responseCode) {
                 in 200..299 -> parseSuccessResponse(connection)
                 401 -> AuthResult.Failure("Invalid email or security key.")
+                403 -> AuthResult.Failure(readErrorMessage(connection, "Selected role does not match this account."))
+                400 -> AuthResult.Failure(readErrorMessage(connection, "Invalid login request."))
                 else -> AuthResult.Failure("Authentication failed ($statusCode).")
             }
         } catch (_: IOException) {
@@ -65,6 +69,14 @@ class AuthRepository(private val baseUrl: String) {
         } finally {
             connection?.disconnect()
         }
+    }
+
+    private fun readErrorMessage(connection: HttpURLConnection, fallback: String): String {
+        return runCatching {
+            val raw = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: return fallback
+            val root = JSONObject(raw)
+            root.optString("message").ifBlank { fallback }
+        }.getOrElse { fallback }
     }
 
     private fun parseSuccessResponse(connection: HttpURLConnection): AuthResult {
@@ -88,7 +100,7 @@ class AuthRepository(private val baseUrl: String) {
         val role = roleRaw.toUserRoleOrNull()
         val username = user.optFirstNonBlank("username", "name", "fullName", "displayName")
         val branch = user.optFirstNonBlank("branch", "department", "program", "major")
-        val batch = user.optFirstNonBlank("batch", "classOf", "cohort", "year")
+        val batch = user.optFirstNonBlank("batch", "classOf", "cohort", "year", "classSection")
 
         if (accessToken.isBlank() || refreshToken.isBlank() || userId <= 0L || userEmail.isBlank() || role == null) {
             return AuthResult.Failure("Malformed auth response.")

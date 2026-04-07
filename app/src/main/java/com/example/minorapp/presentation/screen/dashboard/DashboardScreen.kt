@@ -14,8 +14,7 @@ fun DashboardScreen(
     onProfileClick: () -> Unit = {},
     onAttendanceClick: () -> Unit = {},
     onTasksClick: () -> Unit = {},
-    onSummaryClick: () -> Unit = {},
-    onProfessorTestClick: () -> Unit = {}
+    onSummaryClick: () -> Unit = {}
 ) {
     when (role) {
         UserRole.STUDENT -> {
@@ -26,8 +25,7 @@ fun DashboardScreen(
                     onProfileClick = onProfileClick,
                     onAttendanceClick = onAttendanceClick,
                     onTasksClick = onTasksClick,
-                    onSummaryClick = onSummaryClick,
-                    onProfessorTestClick = onProfessorTestClick
+                    onSummaryClick = onSummaryClick
                 )
             } else {
                 StudentDashboardScreen(
@@ -38,8 +36,7 @@ fun DashboardScreen(
                     onProfileClick = onProfileClick,
                     onAttendanceClick = onAttendanceClick,
                     onTasksClick = onTasksClick,
-                    onSummaryClick = onSummaryClick,
-                    onProfessorTestClick = onProfessorTestClick
+                    onSummaryClick = onSummaryClick
                 )
             }
         }

@@ -6,10 +6,12 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.minorapp.data.tasks.LocalTasksRepository
+import com.example.minorapp.BuildConfig
 import com.example.minorapp.data.session.SessionManager
+import com.example.minorapp.data.tasks.BackendTasksRepository
 
 @Composable
 fun TasksRoute(
@@ -17,11 +19,13 @@ fun TasksRoute(
     onNavigateToDashboard: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToSummary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val tasksRepository = remember { BackendTasksRepository(BuildConfig.AUTH_BASE_URL) }
     val viewModel: TasksViewModel = viewModel(
-        factory = TasksViewModel.factory(LocalTasksRepository(), sessionManager)
+        factory = TasksViewModel.factory(tasksRepository, sessionManager)
     )
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -67,6 +71,7 @@ fun TasksRoute(
         onNavigateToDashboard = onNavigateToDashboard,
         onNavigateToAttendance = onNavigateToAttendance,
         onNavigateToSummary = onNavigateToSummary,
-        onProfileClick = onProfileClick
+        onProfileClick = onProfileClick,
+        onLogoutClick = onLogoutClick
     )
 }

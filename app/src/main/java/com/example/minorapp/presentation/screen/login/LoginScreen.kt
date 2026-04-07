@@ -37,6 +37,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 import com.example.minorapp.domain.model.UserRole
 import com.example.minorapp.ui.theme.AppTextStyles
 import com.example.minorapp.ui.theme.MinorAppTheme
@@ -64,12 +67,19 @@ fun LoginScreen(
     onRequestAccessClick: () -> Unit,
     onLoginClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val background = Color(0xFFF2F4F8)
     val cardBackground = Color(0xFFF8F9FB)
     val primaryBlue = Color(0xFF0D5CAB)
     val sectionLabel = Color(0xFF263143)
     val inputBackground = Color(0xFFE6E8EC)
     val mutedText = Color(0xFF6B7280)
+
+    LaunchedEffect(uiState.errorMessage) {
+        if (uiState.errorMessage.equals("Wrong credentials", ignoreCase = true)) {
+            Toast.makeText(context, "Wrong credentials", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -231,34 +241,18 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (uiState.authStatusMessage != null) {
-                Text(
-                    text = uiState.authStatusMessage,
-                    color = if (uiState.credentialsVerified) Color(0xFF027A48) else Color(0xFF6B7280),
-                    style = AppTextStyles.body
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-            }
-
-            if (uiState.errorMessage != null) {
-                Text(
-                    text = uiState.errorMessage,
-                    color = Color(0xFFB42318),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-            }
-
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onRememberFor30DaysChanged(!uiState.rememberFor30Days) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
                     checked = uiState.rememberFor30Days,
-                    onCheckedChange = { onRememberFor30DaysChanged(it) }
+                    onCheckedChange = onRememberFor30DaysChanged
                 )
                 Text(
-                    text = "Keep me authenticated for 30 days",
+                    text = "Remember me for 30 days",
                     style = AppTextStyles.body,
                     color = Color(0xFF2C3646)
                 )
@@ -291,6 +285,17 @@ fun LoginScreen(
                         tint = Color.White
                     )
                 }
+            }
+
+            if (uiState.errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = uiState.errorMessage,
+                    color = Color(0xFFB42318),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
 
             Spacer(modifier = Modifier.height(26.dp))
@@ -447,6 +452,10 @@ private fun InputField(
             focusedContainerColor = background,
             unfocusedContainerColor = background,
             disabledContainerColor = background,
+            focusedTextColor = Color(0xFF111827),
+            unfocusedTextColor = Color(0xFF111827),
+            disabledTextColor = Color(0xFF6B7280),
+            cursorColor = Color(0xFF0D5CAB),
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent
         ),

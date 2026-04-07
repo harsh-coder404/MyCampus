@@ -136,15 +136,13 @@ private fun initialUiState(sessionManager: SessionManager): StudentDashboardUiSt
 }
 
 private fun resolveStudentDisplayName(sessionManager: SessionManager, backendValue: String? = null): String {
-    val studentSavedName = sessionManager.getSavedUsernameForRole(UserRole.STUDENT)
-        ?.trim()
-        ?.takeIf { it.isNotBlank() }
+    val studentSavedName = sessionManager.getPreferredDisplayName(UserRole.STUDENT)
     val backendName = backendValue
         ?.trim()
         ?.takeIf { it.isNotBlank() }
         ?.takeUnless { it.equals("Sharma", ignoreCase = true) || it.startsWith("Prof", ignoreCase = true) }
 
-    return studentSavedName ?: backendName ?: "Harsh"
+    return studentSavedName ?: backendName ?: "Student"
 }
 
 private fun StudentDashboardUiState.withSharedMetrics(sessionManager: SessionManager): StudentDashboardUiState {

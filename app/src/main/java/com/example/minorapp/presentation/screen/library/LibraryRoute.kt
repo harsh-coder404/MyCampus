@@ -10,7 +10,8 @@ import com.example.minorapp.data.session.SessionManager
 fun LibraryRoute(
     sessionManager: SessionManager,
     onBackClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit = {}
 ) {
     val viewModel: LibraryViewModel = viewModel(
         factory = LibraryViewModel.factory(sessionManager)
@@ -21,6 +22,7 @@ fun LibraryRoute(
         uiState = uiState,
         onBackClick = onBackClick,
         onProfileClick = onProfileClick,
+        onLogoutClick = onLogoutClick,
         onSearchQueryChanged = viewModel::onSearchQueryChanged
     )
 }

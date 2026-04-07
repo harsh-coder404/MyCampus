@@ -20,8 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Card
@@ -35,14 +33,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,8 +46,6 @@ import android.widget.Toast
 import androidx.compose.material.icons.outlined.AddShoppingCart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.DateRange
-import androidx.core.net.toUri
-import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.IntrinsicSize
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.MyCampusTopBar
@@ -63,6 +56,7 @@ fun LibraryScreen(
     uiState: LibraryUiState,
     onBackClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit = {},
     onSearchQueryChanged: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -71,7 +65,8 @@ fun LibraryScreen(
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri,
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         floatingActionButton = {

@@ -64,14 +64,16 @@ fun ProfessorSummaryScreen(
     onNavigateToAttendance: () -> Unit = {},
     onNavigateToTasks: () -> Unit = {},
     onNavigateToLibrary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri,
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         bottomBar = {

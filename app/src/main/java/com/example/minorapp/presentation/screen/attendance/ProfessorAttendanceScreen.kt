@@ -43,6 +43,7 @@ fun ProfessorAttendanceScreen(
     onNavigateToTasks: () -> Unit,
     onNavigateToSummary: () -> Unit,
     onProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit = {},
     onSubmitClick: () -> Unit = {}
 ) {
     Scaffold(
@@ -50,7 +51,8 @@ fun ProfessorAttendanceScreen(
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri,
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         bottomBar = {

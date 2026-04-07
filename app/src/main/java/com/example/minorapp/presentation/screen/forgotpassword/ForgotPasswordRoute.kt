@@ -8,7 +8,7 @@ import com.example.minorapp.data.auth.ForgotPasswordRepository
 
 @Composable
 fun ForgotPasswordRoute(
-    onNavigateToResetPassword: () -> Unit,
+    onNavigateToResetPassword: (String) -> Unit,
     onNavigateToResetLinkSent: (String) -> Unit = {},
     onBackToLoginClick: () -> Unit
 ) {
@@ -27,7 +27,7 @@ fun ForgotPasswordRoute(
         isVerifying = uiState.isVerifying,
         onVerifyIdentityClick = {
             viewModel.onVerifyIdentityClick(
-                onSuccess = { _ -> onNavigateToResetPassword() }
+                onSuccess = { _ -> onNavigateToResetPassword(uiState.email) }
             )
         },
         onBackClick = onBackToLoginClick

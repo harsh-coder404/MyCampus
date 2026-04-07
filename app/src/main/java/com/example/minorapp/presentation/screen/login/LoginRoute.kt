@@ -6,13 +6,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.minorapp.BuildConfig
 import com.example.minorapp.data.auth.AuthRepository
 import com.example.minorapp.data.session.SessionManager
+import com.example.minorapp.domain.model.UserRole
 
 @Composable
 fun LoginRoute(
     sessionManager: SessionManager,
     onNavigateToForgotPassword: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onNavigateToDashboard: () -> Unit
+    onNavigateToDashboard: (UserRole) -> Unit
 ) {
     val authRepository = remember { AuthRepository(BuildConfig.AUTH_BASE_URL) }
     val viewModel: LoginViewModel = viewModel(
@@ -38,11 +39,12 @@ fun LoginRoute(
                     rememberFor30Days = state.rememberFor30Days,
                     accessToken = accessToken,
                     refreshToken = refreshToken,
+                    email = state.email,
                     username = state.username,
                     branch = state.branch,
                     batch = state.batch
                 )
-                onNavigateToDashboard()
+                onNavigateToDashboard(authenticatedRole)
             }
         }
     )

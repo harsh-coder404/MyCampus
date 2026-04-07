@@ -37,7 +37,7 @@ class ProfileViewModel(
     var uiState by mutableStateOf(
         ProfileUiState(
             username = normalizeProfileUsername(
-                raw = sessionManager.getSavedUsernameForRole(profileRole) ?: defaultName(professorFlow),
+                raw = sessionManager.getPreferredDisplayName(profileRole) ?: defaultName(professorFlow),
                 isProfessorFlow = professorFlow
             ),
             branch = sessionManager.getSavedBranch() ?: defaultBranch(professorFlow),

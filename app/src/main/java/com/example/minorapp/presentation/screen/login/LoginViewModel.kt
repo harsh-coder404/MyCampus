@@ -10,15 +10,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.minorapp.data.auth.AuthRepository
 import com.example.minorapp.data.auth.AuthResult
 import com.example.minorapp.domain.model.UserRole
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val selectedRole: UserRole = UserRole.STUDENT,
     val email: String = "",
     val password: String = "",
-    val rememberFor30Days: Boolean = false,
     val emailError: String? = null,
     val errorMessage: String? = null,
     val authStatusMessage: String? = null,
@@ -29,7 +26,8 @@ data class LoginUiState(
     val refreshToken: String? = null,
     val username: String? = null,
     val branch: String? = null,
-    val batch: String? = null
+    val batch: String? = null,
+    val rememberFor30Days: Boolean = false
 )
 
 class LoginViewModel(
@@ -37,8 +35,6 @@ class LoginViewModel(
 ) : ViewModel() {
     var uiState by mutableStateOf(LoginUiState())
         private set
-
-    private var realtimeAuthJob: Job? = null
 
     companion object {
         fun factory(authRepository: AuthRepository): ViewModelProvider.Factory {
@@ -64,7 +60,6 @@ class LoginViewModel(
             authStatusMessage = null,
             errorMessage = null
         )
-        scheduleRealtimeAuthentication()
     }
 
     fun onEmailChanged(email: String) {
@@ -82,7 +77,6 @@ class LoginViewModel(
             branch = null,
             batch = null
         )
-        scheduleRealtimeAuthentication()
     }
 
     fun onPasswordChanged(password: String) {
@@ -98,12 +92,12 @@ class LoginViewModel(
             branch = null,
             batch = null
         )
-        scheduleRealtimeAuthentication()
     }
 
-    fun onRememberFor30DaysChanged(checked: Boolean) {
-        uiState = uiState.copy(rememberFor30Days = checked)
+    fun onRememberFor30DaysChanged(rememberFor30Days: Boolean) {
+        uiState = uiState.copy(rememberFor30Days = rememberFor30Days)
     }
+
 
     fun onLoginRequested(onValidRequest: (LoginUiState) -> Unit) {
         if (uiState.email.isBlank() || uiState.password.isBlank()) {
@@ -123,44 +117,40 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            val authenticated = authenticate(showSuccessMessage = false)
+            val authenticated = authenticate()
             if (authenticated) {
                 onValidRequest(uiState)
             }
         }
     }
 
-    private fun scheduleRealtimeAuthentication() {
-        realtimeAuthJob?.cancel()
-
-        if (!isReadyForAuth()) return
-
-        realtimeAuthJob = viewModelScope.launch {
-            delay(450)
-            authenticate(showSuccessMessage = true)
-        }
-    }
-
-    private fun isReadyForAuth(): Boolean {
-        return uiState.email.isNotBlank() &&
-            uiState.password.isNotBlank() &&
-            uiState.emailError == null
-    }
-
-    private suspend fun authenticate(showSuccessMessage: Boolean): Boolean {
+    private suspend fun authenticate(): Boolean {
         uiState = uiState.copy(
             isAuthenticating = true,
             errorMessage = null,
-            authStatusMessage = "Authenticating..."
+            authStatusMessage = null
         )
 
         return when (
             val result = authRepository.authenticate(
                 email = uiState.email,
-                password = uiState.password
+                password = uiState.password,
+                selectedRole = uiState.selectedRole
             )
         ) {
             is AuthResult.Success -> {
+                if (result.role != uiState.selectedRole) {
+                    uiState = uiState.copy(
+                        isAuthenticating = false,
+                        credentialsVerified = false,
+                        authStatusMessage = null,
+                        errorMessage = "Selected role does not match this account.",
+                        username = null,
+                        branch = null,
+                        batch = null
+                    )
+                    return false
+                }
                 uiState = uiState.copy(
                     isAuthenticating = false,
                     credentialsVerified = true,
@@ -171,17 +161,22 @@ class LoginViewModel(
                     branch = result.branch,
                     batch = result.batch,
                     errorMessage = null,
-                    authStatusMessage = if (showSuccessMessage) "Credentials verified." else null
+                    authStatusMessage = null
                 )
                 true
             }
 
             is AuthResult.Failure -> {
+                val resolvedMessage = if (result.message.equals("Invalid email or security key.", ignoreCase = true)) {
+                    "Wrong credentials"
+                } else {
+                    result.message
+                }
                 uiState = uiState.copy(
                     isAuthenticating = false,
                     credentialsVerified = false,
                     authStatusMessage = null,
-                    errorMessage = result.message,
+                    errorMessage = resolvedMessage,
                     username = null,
                     branch = null,
                     batch = null

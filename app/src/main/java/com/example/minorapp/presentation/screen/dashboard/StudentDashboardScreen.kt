@@ -50,8 +50,7 @@ fun StudentDashboardScreen(
     onProfileClick: () -> Unit = {},
     onAttendanceClick: () -> Unit = {},
     onTasksClick: () -> Unit = {},
-    onSummaryClick: () -> Unit = {},
-    onProfessorTestClick: () -> Unit = {}
+    onSummaryClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     var subjectsExpanded by remember { mutableStateOf(false) }
@@ -379,22 +378,6 @@ fun StudentDashboardScreen(
                 )
             }
 
-            Button(
-                onClick = onProfessorTestClick,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF0F172A),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(
-                    text = "Test Professor Dashboard",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
-            }
-            
             Spacer(modifier = Modifier.height(20.dp))
         }
     }

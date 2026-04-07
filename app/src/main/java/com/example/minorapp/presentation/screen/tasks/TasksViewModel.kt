@@ -6,11 +6,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.minorapp.data.tasks.LocalTasksRepository
+import com.example.minorapp.data.tasks.RemoteTasksSyncResult
 import com.example.minorapp.data.tasks.TaskData
+import com.example.minorapp.data.tasks.TaskSubmissionSyncResult
 import com.example.minorapp.data.tasks.TaskStatus
 import com.example.minorapp.data.tasks.TasksRepository
 import com.example.minorapp.data.session.SessionManager
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -143,6 +147,10 @@ class TasksViewModel(
 ) : ViewModel() {
     var uiState by mutableStateOf(loadInitialUiState())
         private set
+
+    init {
+        refreshTasksFromBackend()
+    }
 
     fun onFilterSelected(filter: TasksFilter) {
         uiState = uiState.copy(selectedFilter = filter)
@@ -289,6 +297,13 @@ class TasksViewModel(
             issuedHistoryTaskIds = uiState.issuedHistoryTaskIds,
             closedHistoryTaskIds = closedHistory.second
         )
+
+        viewModelScope.launch {
+            when (repository.submitTask(sessionManager.getAccessToken(), activeTaskId)) {
+                is TaskSubmissionSyncResult.Success -> Unit
+                is TaskSubmissionSyncResult.Failure -> Unit
+            }
+        }
     }
 
     fun onDeleteCustomTask(taskId: String) {
@@ -597,6 +612,66 @@ class TasksViewModel(
     private fun extractPdfName(pdfUri: String): String {
         val lastSegment = Uri.parse(pdfUri).lastPathSegment.orEmpty()
         return lastSegment.substringAfterLast(':').substringAfterLast('/').ifBlank { "file.pdf" }
+    }
+
+    private fun refreshTasksFromBackend() {
+        viewModelScope.launch {
+            when (val result = repository.fetchRemoteTasks(sessionManager.getAccessToken())) {
+                is RemoteTasksSyncResult.Success -> {
+                    if (result.tasks.isEmpty()) return@launch
+
+                    val localById = uiState.tasks.associateBy { it.id }
+                    val remoteTasks = result.tasks.map { serverTask ->
+                        val remoteUi = serverTask.toUi()
+                        val local = localById[remoteUi.id]
+                        if (local != null && local.status == TaskStatus.COMPLETED.name) {
+                            remoteUi.copy(
+                                status = TaskStatus.COMPLETED.name,
+                                dueText = null,
+                                isDueSoon = false,
+                                uploadedPdfUri = local.uploadedPdfUri,
+                                submissionTimestampText = local.submissionTimestampText,
+                                completedBeforeDeadline = local.completedBeforeDeadline
+                            )
+                        } else {
+                            remoteUi
+                        }
+                    }
+                    val mergedTasks = (remoteTasks + uiState.tasks.filter { it.id.startsWith("custom-") })
+                        .distinctBy { it.id }
+
+                    val issuedHistory = appendIssuedEventsIfMissing(
+                        tasks = mergedTasks,
+                        existingHistory = uiState.taskHistory,
+                        issuedTaskIds = uiState.issuedHistoryTaskIds
+                    )
+                    val closedHistory = appendClosedEventsIfMissing(
+                        tasks = mergedTasks,
+                        existingHistory = issuedHistory.first,
+                        closedTaskIds = uiState.closedHistoryTaskIds
+                    )
+
+                    uiState = uiState.copy(
+                        tasks = mergedTasks,
+                        completionRate = calculateCompletionRate(mergedTasks),
+                        taskHistory = closedHistory.first,
+                        issuedHistoryTaskIds = issuedHistory.second,
+                        closedHistoryTaskIds = closedHistory.second
+                    )
+
+                    persistTaskSubmissionSnapshot(
+                        tasks = mergedTasks,
+                        selectedPriorityTaskId = uiState.selectedPriorityTaskId,
+                        isPriorityManuallyCleared = uiState.isPriorityManuallyCleared,
+                        taskHistory = uiState.taskHistory,
+                        issuedHistoryTaskIds = uiState.issuedHistoryTaskIds,
+                        closedHistoryTaskIds = uiState.closedHistoryTaskIds
+                    )
+                }
+
+                is RemoteTasksSyncResult.Failure -> Unit
+            }
+        }
     }
 
     companion object {

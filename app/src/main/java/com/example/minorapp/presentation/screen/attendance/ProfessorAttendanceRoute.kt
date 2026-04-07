@@ -10,7 +10,8 @@ fun ProfessorAttendanceRoute(
     onNavigateToDashboard: () -> Unit,
     onNavigateToTasks: () -> Unit = {},
     onNavigateToSummary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     val viewModel: ProfessorAttendanceViewModel = viewModel(
         factory = ProfessorAttendanceViewModel.factory(sessionManager)
@@ -24,6 +25,7 @@ fun ProfessorAttendanceRoute(
         onNavigateToTasks = onNavigateToTasks,
         onNavigateToSummary = onNavigateToSummary,
         onProfileClick = onProfileClick,
+        onLogoutClick = onLogoutClick,
         onSubmitClick = { /* Handle submit later */ }
     )
 }

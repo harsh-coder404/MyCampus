@@ -51,13 +51,18 @@ fun ProfessorTasksScreen(
     onCategorySelect: (String) -> Unit,
     onCategoryDropdownToggle: () -> Unit,
     onCategoryDropdownHide: () -> Unit,
+    onClassTargetSelected: (Long) -> Unit,
+    onSelectChecklistTask: (String) -> Unit,
     onDeployAssignment: () -> Unit,
     onNavigateToDashboard: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToSummary: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit = {}
 ) {
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    var showClassTargetDropdown by remember { mutableStateOf(false) }
+    var showChecklistTaskDropdown by remember { mutableStateOf(false) }
     val todayUtcStartMillis = remember {
         Instant.now().atOffset(ZoneOffset.UTC).toLocalDate()
             .atStartOfDay()
@@ -67,7 +72,8 @@ fun ProfessorTasksScreen(
     val isDeployEnabled = uiState.title.trim().isNotEmpty() &&
         uiState.description.trim().isNotEmpty() &&
         uiState.deadlineDate.trim().isNotEmpty() &&
-        uiState.category.trim().isNotEmpty()
+        uiState.category.trim().isNotEmpty() &&
+        uiState.selectedClassTargetId != null
 
     if (showDeadlinePicker) {
         val selectableDates = remember(todayUtcStartMillis) {
@@ -113,7 +119,8 @@ fun ProfessorTasksScreen(
             MyCampusTopBar(
                 profileImageUri = uiState.profileImageUri?.toString(),
                 onProfileClick = onProfileClick,
-                subjects = DummyDataConstants.dummySubjects
+                subjects = DummyDataConstants.dummySubjects,
+                onLogoutClick = onLogoutClick
             )
         },
         bottomBar = {
@@ -364,7 +371,71 @@ fun ProfessorTasksScreen(
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "TARGET CLASS",
+                                color = Color(0xFF64748B),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box {
+                                val selectedClassText = uiState.classTargets
+                                    .firstOrNull { it.id == uiState.selectedClassTargetId }
+                                    ?.name
+                                    ?: "Select class"
+                                OutlinedTextField(
+                                    value = selectedClassText,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    trailingIcon = {
+                                        IconButton(onClick = { showClassTargetDropdown = true }) {
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
+                                        }
+                                    },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFE2E8F0),
+                                        unfocusedBorderColor = Color(0xFFE2E8F0),
+                                        unfocusedContainerColor = Color(0xFFF1F5F9),
+                                        focusedContainerColor = Color(0xFFF1F5F9),
+                                        focusedTextColor = Color(0xFF0F172A),
+                                        unfocusedTextColor = Color(0xFF0F172A)
+                                    )
+                                )
+                                DropdownMenu(
+                                    expanded = showClassTargetDropdown,
+                                    onDismissRequest = { showClassTargetDropdown = false },
+                                    modifier = Modifier.background(Color.White)
+                                ) {
+                                    uiState.classTargets.forEach { classTarget ->
+                                        DropdownMenuItem(
+                                            text = { Text(classTarget.name) },
+                                            onClick = {
+                                                onClassTargetSelected(classTarget.id)
+                                                showClassTargetDropdown = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(20.dp))
+
+                        uiState.statusMessage?.let { message ->
+                            Text(
+                                text = message,
+                                color = Color(0xFF334155),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
 
                         // Deploy Button
                         Button(
@@ -469,6 +540,98 @@ fun ProfessorTasksScreen(
                     isDraft = task.isDraft,
                     draftHint = task.draftHint
                 )
+            }
+
+            if (uiState.activeInventory.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                text = "Submission Checklist",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF0F172A)
+                            )
+
+                            val selectedTaskTitle = uiState.activeInventory
+                                .firstOrNull { it.id == uiState.selectedChecklistTaskId }
+                                ?.title
+                                ?: uiState.activeInventory.first().title
+
+                            Box {
+                                OutlinedTextField(
+                                    value = selectedTaskTitle,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showChecklistTaskDropdown = true },
+                                    shape = RoundedCornerShape(8.dp),
+                                    trailingIcon = {
+                                        IconButton(onClick = { showChecklistTaskDropdown = true }) {
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
+                                        }
+                                    }
+                                )
+
+                                DropdownMenu(
+                                    expanded = showChecklistTaskDropdown,
+                                    onDismissRequest = { showChecklistTaskDropdown = false }
+                                ) {
+                                    uiState.activeInventory.forEach { task ->
+                                        DropdownMenuItem(
+                                            text = { Text(task.title) },
+                                            onClick = {
+                                                onSelectChecklistTask(task.id)
+                                                showChecklistTaskDropdown = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (uiState.submissionChecklist.isEmpty()) {
+                                Text(
+                                    text = "No submission records yet.",
+                                    color = Color(0xFF64748B),
+                                    fontSize = 13.sp
+                                )
+                            } else {
+                                uiState.submissionChecklist.forEach { row ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = row.studentName,
+                                                color = Color(0xFF0F172A),
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 14.sp
+                                            )
+                                            Text(
+                                                text = row.rollNumber,
+                                                color = Color(0xFF64748B),
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                        Checkbox(
+                                            checked = row.submitted,
+                                            onCheckedChange = null
+                                        )
+                                    }
+                                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }

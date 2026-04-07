@@ -1,5 +1,6 @@
 package com.example.minorapp.presentation.screen.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +25,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
+import com.example.minorapp.BuildConfig
+import com.example.minorapp.data.auth.ResetPasswordRepository
+import com.example.minorapp.data.auth.ResetPasswordResult
+import com.example.minorapp.data.session.SessionManager
+import kotlinx.coroutines.launch
 
 fun isPasswordValid(password: String): Boolean {
     return password.length >= 8 &&
@@ -37,11 +42,16 @@ fun isPasswordValid(password: String): Boolean {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResetPasswordScreen(
+    sessionManager: SessionManager,
     requireCurrentPassword: Boolean = true,
+    resetEmail: String? = null,
     onBackClick: () -> Unit,
     onNavigateToForgotPassword: () -> Unit = {},
     onPasswordUpdated: () -> Unit = {}
 ) {
+    val repository = remember { ResetPasswordRepository(BuildConfig.AUTH_BASE_URL) }
+    val coroutineScope = rememberCoroutineScope()
+
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -49,6 +59,8 @@ fun ResetPasswordScreen(
     var isCurrentPasswordVisible by remember { mutableStateOf(false) }
     var isNewPasswordVisible by remember { mutableStateOf(false) }
     var isConfirmPasswordVisible by remember { mutableStateOf(false) }
+    var isUpdating by remember { mutableStateOf(false) }
+    var statusMessage by remember { mutableStateOf<String?>(null) }
 
     val isCurrentPasswordError = requireCurrentPassword && currentPassword.isNotEmpty() && !isPasswordValid(currentPassword)
     val isNewPasswordError = newPassword.isNotEmpty() && !isPasswordValid(newPassword)
@@ -156,6 +168,15 @@ fun ResetPasswordScreen(
                         Spacer(modifier = Modifier.height(20.dp))
                     }
 
+                    if (statusMessage != null) {
+                        Text(
+                            text = statusMessage.orEmpty(),
+                            color = Color(0xFF334155),
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
                     PasswordField(
                         label = "NEW PASSWORD",
                         value = newPassword,
@@ -181,8 +202,38 @@ fun ResetPasswordScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = onPasswordUpdated,
-                        enabled = isFormValid,
+                        onClick = {
+                            val email = resetEmail ?: sessionManager.getSavedEmail()
+                            if (email.isNullOrBlank()) {
+                                statusMessage = "Unable to resolve account email for password update."
+                                return@Button
+                            }
+
+                            coroutineScope.launch {
+                                isUpdating = true
+                                statusMessage = "Updating password..."
+                                when (
+                                    val result = repository.changePassword(
+                                        email = email,
+                                        currentPassword = if (requireCurrentPassword) currentPassword else null,
+                                        newPassword = newPassword,
+                                        accessToken = sessionManager.getAccessToken()
+                                    )
+                                ) {
+                                    is ResetPasswordResult.Success -> {
+                                        isUpdating = false
+                                        statusMessage = result.message
+                                        onPasswordUpdated()
+                                    }
+
+                                    is ResetPasswordResult.Failure -> {
+                                        isUpdating = false
+                                        statusMessage = result.message
+                                    }
+                                }
+                            }
+                        },
+                        enabled = isFormValid && !isUpdating,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF0265DC),
                             contentColor = Color.White,
@@ -194,7 +245,11 @@ fun ResetPasswordScreen(
                             .fillMaxWidth()
                             .height(48.dp)
                     ) {
-                        Text("Update Password", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                        Text(
+                            if (isUpdating) "Updating..." else "Update Password",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }

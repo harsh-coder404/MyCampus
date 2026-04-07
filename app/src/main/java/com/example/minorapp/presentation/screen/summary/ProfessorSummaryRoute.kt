@@ -13,7 +13,8 @@ fun ProfessorSummaryRoute(
     onNavigateToAttendance: () -> Unit,
     onNavigateToTasks: () -> Unit,
     onNavigateToLibrary: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit = {}
 ) {
     val viewModel: ProfessorSummaryViewModel = viewModel(
         factory = ProfessorSummaryViewModel.factory(sessionManager)
@@ -26,6 +27,7 @@ fun ProfessorSummaryRoute(
         onNavigateToAttendance = onNavigateToAttendance,
         onNavigateToTasks = onNavigateToTasks,
         onNavigateToLibrary = onNavigateToLibrary,
-        onProfileClick = onProfileClick
+        onProfileClick = onProfileClick,
+        onLogoutClick = onLogoutClick
     )
 }

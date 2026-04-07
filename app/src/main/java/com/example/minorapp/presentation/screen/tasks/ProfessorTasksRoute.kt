@@ -1,7 +1,10 @@
 package com.example.minorapp.presentation.screen.tasks
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.minorapp.data.session.SessionManager
 
 @Composable
@@ -10,11 +13,30 @@ fun ProfessorTasksRoute(
     onNavigateToDashboard: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToSummary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
     val viewModel: ProfessorTasksViewModel = viewModel(
         factory = ProfessorTasksViewModel.factory(sessionManager)
     )
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> viewModel.startChecklistPolling()
+                androidx.lifecycle.Lifecycle.Event.ON_STOP,
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> viewModel.stopChecklistPolling()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.stopChecklistPolling()
+        }
+    }
 
     ProfessorTasksScreen(
         uiState = viewModel.uiState,
@@ -24,11 +46,14 @@ fun ProfessorTasksRoute(
         onCategorySelect = viewModel::onCategorySelect,
         onCategoryDropdownToggle = viewModel::toggleCategoryDropdown,
         onCategoryDropdownHide = viewModel::hideCategoryDropdown,
-        onDeployAssignment = {}, // Backend integration later
+        onClassTargetSelected = viewModel::onClassTargetSelected,
+        onSelectChecklistTask = viewModel::onSelectChecklistTask,
+        onDeployAssignment = viewModel::onDeployAssignment,
         onNavigateToDashboard = onNavigateToDashboard,
         onNavigateToAttendance = onNavigateToAttendance,
         onNavigateToSummary = onNavigateToSummary,
-        onProfileClick = onProfileClick
+        onProfileClick = onProfileClick,
+        onLogoutClick = onLogoutClick
     )
 }
 

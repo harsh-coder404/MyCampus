@@ -14,7 +14,8 @@ fun AttendanceRoute(
     onNavigateToDashboard: () -> Unit,
     onNavigateToTasks: () -> Unit = {},
     onNavigateToSummary: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     if (sessionManager.getSavedRole() == UserRole.PROFESSOR) {
         ProfessorAttendanceRoute(
@@ -22,7 +23,8 @@ fun AttendanceRoute(
             onNavigateToDashboard = onNavigateToDashboard,
             onNavigateToTasks = onNavigateToTasks,
             onNavigateToSummary = onNavigateToSummary,
-            onProfileClick = onProfileClick
+            onProfileClick = onProfileClick,
+            onLogoutClick = onLogoutClick
         )
     } else {
         val attendanceRepository = remember { AttendanceRepository(BuildConfig.AUTH_BASE_URL) }
@@ -36,7 +38,8 @@ fun AttendanceRoute(
             onNavigateToDashboard = onNavigateToDashboard,
             onNavigateToTasks = onNavigateToTasks,
             onNavigateToSummary = onNavigateToSummary,
-            onProfileClick = onProfileClick
+            onProfileClick = onProfileClick,
+            onLogoutClick = onLogoutClick
         )
     }
 }

@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MinorAppTheme {
-                MyCampusApp(startDestination = AppRoute.Dashboard.route)
+                MyCampusApp(startDestination = AppRoute.Splash.route)
             }
         }
     }
