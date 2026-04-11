@@ -40,7 +40,7 @@ class DashboardRepository(private val baseUrl: String) {
 
             when (val statusCode = connection.responseCode) {
                 in 200..299 -> DashboardResult.Success(parseStudentDashboard(connection))
-                401 -> DashboardResult.Failure("Session expired. Please login again.")
+                401, 403 -> DashboardResult.Failure("Session expired. Please login again.")
                 else -> DashboardResult.Failure("Unable to load dashboard ($statusCode).")
             }
         } catch (_: IOException) {

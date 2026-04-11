@@ -1,6 +1,7 @@
 package com.example.minorapp.presentation.screen.dashboard
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.minorapp.BuildConfig
@@ -20,6 +21,13 @@ fun StudentDashboardRoute(
     val viewModel: StudentDashboardViewModel = viewModel(
         factory = StudentDashboardViewModel.factory(sessionManager, dashboardRepository)
     )
+
+    LaunchedEffect(viewModel.uiState.shouldForceReauth) {
+        if (viewModel.uiState.shouldForceReauth) {
+            viewModel.onForceReauthHandled()
+            onLogout()
+        }
+    }
 
     StudentDashboardScreen(
         uiState = viewModel.uiState,

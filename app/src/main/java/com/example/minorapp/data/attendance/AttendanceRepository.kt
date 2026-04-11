@@ -48,7 +48,7 @@ class AttendanceRepository(private val baseUrl: String) {
 
             when (val statusCode = connection.responseCode) {
                 in 200..299 -> parseInsights(connection)
-                401 -> AttendanceInsightsResult.Failure("Session expired. Please login again.")
+                401, 403 -> AttendanceInsightsResult.Failure("Session expired. Please login again.")
                 else -> AttendanceInsightsResult.Failure("Unable to load attendance insights ($statusCode).")
             }
         } catch (_: IOException) {

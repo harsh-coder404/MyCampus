@@ -209,7 +209,7 @@ fun ProfileScreen(
                         color = Color(0xFF0F172A)
                     )
                     Text(
-                        text = "V2.1.0",
+                        text = "V1.0.0",
                         color = Color(0xFF0265DC),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,

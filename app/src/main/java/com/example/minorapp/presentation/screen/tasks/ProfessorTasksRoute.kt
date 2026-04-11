@@ -2,6 +2,7 @@ package com.example.minorapp.presentation.screen.tasks
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -20,6 +21,13 @@ fun ProfessorTasksRoute(
     val viewModel: ProfessorTasksViewModel = viewModel(
         factory = ProfessorTasksViewModel.factory(sessionManager)
     )
+
+    LaunchedEffect(viewModel.uiState.shouldForceReauth) {
+        if (viewModel.uiState.shouldForceReauth) {
+            viewModel.onForceReauthHandled()
+            onLogoutClick()
+        }
+    }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->

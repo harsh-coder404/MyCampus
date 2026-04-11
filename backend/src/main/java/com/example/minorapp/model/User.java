@@ -33,6 +33,9 @@ public class User {
     @Column
     private String classSection;
 
+    @Column(name = "device_id")
+    private String deviceId;
+
     public Long getId() {
         return id;
     }
@@ -88,7 +91,12 @@ public class User {
     public void setClassSection(String classSection) {
         this.classSection = classSection;
     }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
+    }
 }
-
-
-

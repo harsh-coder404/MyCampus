@@ -1,6 +1,7 @@
 package com.example.minorapp.presentation.screen.attendance
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.minorapp.data.session.SessionManager
 
@@ -17,16 +18,26 @@ fun ProfessorAttendanceRoute(
         factory = ProfessorAttendanceViewModel.factory(sessionManager)
     )
 
+    LaunchedEffect(viewModel.uiState.shouldForceReauth) {
+        if (viewModel.uiState.shouldForceReauth) {
+            viewModel.onForceReauthHandled()
+            onLogoutClick()
+        }
+    }
+
     ProfessorAttendanceScreen(
-        uiState = viewModel.uiState,
-        onStudentStatusChange = viewModel::onStudentStatusChange,
-        onMarkAllPresent = viewModel::onMarkAllPresent,
-        onNavigateToDashboard = onNavigateToDashboard,
-        onNavigateToTasks = onNavigateToTasks,
-        onNavigateToSummary = onNavigateToSummary,
-        onProfileClick = onProfileClick,
-        onLogoutClick = onLogoutClick,
-        onSubmitClick = { /* Handle submit later */ }
+        viewModel.uiState,
+        viewModel::onStudentStatusChange,
+        viewModel::onMarkAllPresent,
+        viewModel::onModeSelected,
+        viewModel::onCourseSelected,
+        viewModel::onStartQrAttendance,
+        onNavigateToDashboard,
+        onNavigateToTasks,
+        onNavigateToSummary,
+        onProfileClick,
+        onLogoutClick,
+        viewModel::onSubmitAttendanceRecord
     )
 }
 

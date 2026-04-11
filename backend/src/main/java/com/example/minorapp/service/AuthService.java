@@ -205,6 +205,12 @@ public class AuthService {
             return courseRepository.save(created);
         });
 
+        // Keep seeded courses owned by the seeded professor so QR start ownership checks pass consistently.
+        if (course.getProfessor() == null || !course.getProfessor().getId().equals(professor.getId())) {
+            course.setProfessor(professor);
+            course = courseRepository.save(course);
+        }
+
         String sectionToken = classSection.toLowerCase().replace("-", "").replace(" ", "");
         Map<String, Integer> duplicateCount = new HashMap<>();
         for (int i = 0; i < names.length; i++) {

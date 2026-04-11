@@ -180,7 +180,7 @@ class BackendProfessorTasksRepository(
 
             when (connection.responseCode) {
                 in 200..299 -> ProfessorTaskCreateResult.Success
-                401 -> ProfessorTaskCreateResult.Failure("Session expired. Please login again.")
+                401, 403 -> ProfessorTaskCreateResult.Failure("Session expired. Please login again.")
                 else -> ProfessorTaskCreateResult.Failure("Unable to create task right now.")
             }
         } catch (_: IOException) {
@@ -231,7 +231,7 @@ class BackendProfessorTasksRepository(
                     SubmissionChecklistResult.Success(items)
                 }
 
-                401 -> SubmissionChecklistResult.Failure("Session expired. Please login again.")
+                401, 403 -> SubmissionChecklistResult.Failure("Session expired. Please login again.")
                 else -> SubmissionChecklistResult.Failure("Unable to load submission checklist.")
             }
         } catch (_: IOException) {

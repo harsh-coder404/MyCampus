@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,6 +28,14 @@ fun TasksRoute(
     val viewModel: TasksViewModel = viewModel(
         factory = TasksViewModel.factory(tasksRepository, sessionManager)
     )
+
+    LaunchedEffect(viewModel.uiState.shouldForceReauth) {
+        if (viewModel.uiState.shouldForceReauth) {
+            viewModel.onForceReauthHandled()
+            onLogoutClick()
+        }
+    }
+
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->

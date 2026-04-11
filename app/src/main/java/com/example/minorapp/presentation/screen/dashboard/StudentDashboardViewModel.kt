@@ -41,7 +41,8 @@ data class StudentDashboardUiState(
         StudentDashboardLectureUi(DummyDataConstants.dummySubjects[1], "Lab B • 12:45 PM", "LATE"),
         StudentDashboardLectureUi(DummyDataConstants.dummySubjects[2], "Studio 1 • 03:00 PM", "ABSENT")
     ),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val shouldForceReauth: Boolean = false
 )
 
 class StudentDashboardViewModel(
@@ -102,6 +103,11 @@ class StudentDashboardViewModel(
                 }
 
                 is DashboardResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                        return@launch
+                    }
+
                     val cached = sessionManager.getStudentDashboardSnapshot()?.toDashboardUiStateOrNull()
                     if (cached != null) {
                         uiState = cached.copy(
@@ -116,6 +122,23 @@ class StudentDashboardViewModel(
                 }
             }
         }
+    }
+
+    fun onForceReauthHandled() {
+        uiState = uiState.copy(shouldForceReauth = false)
+    }
+
+    private fun triggerForcedReauth(message: String) {
+        sessionManager.clearSession()
+        uiState = uiState.copy(
+            errorMessage = message,
+            shouldForceReauth = true
+        )
+    }
+
+    private fun isUnauthorizedError(message: String): Boolean {
+        val normalized = message.lowercase()
+        return normalized.contains("unauthorized") || normalized.contains("session expired") || normalized.contains("login again")
     }
 }
 

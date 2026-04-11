@@ -79,7 +79,7 @@ class BackendTasksRepository(
 
             when (val statusCode = connection.responseCode) {
                 in 200..299 -> RemoteTasksSyncResult.Success(parseRemoteTasks(connection))
-                401 -> RemoteTasksSyncResult.Failure("Session expired. Please login again.")
+                401, 403 -> RemoteTasksSyncResult.Failure("Session expired. Please login again.")
                 else -> RemoteTasksSyncResult.Failure("Unable to load tasks ($statusCode).")
             }
         } catch (_: IOException) {
@@ -125,7 +125,7 @@ class BackendTasksRepository(
 
             when (connection.responseCode) {
                 in 200..299 -> TaskSubmissionSyncResult.Success
-                401 -> TaskSubmissionSyncResult.Failure("Session expired. Please login again.")
+                401, 403 -> TaskSubmissionSyncResult.Failure("Session expired. Please login again.")
                 else -> TaskSubmissionSyncResult.Failure("Unable to submit task right now.")
             }
         } catch (_: IOException) {

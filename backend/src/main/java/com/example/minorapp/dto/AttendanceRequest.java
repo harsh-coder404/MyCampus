@@ -19,6 +19,8 @@ public class AttendanceRequest {
     @NotBlank
     private String status;
 
+    private String sessionId;
+
     public Long getStudentId() {
         return studentId;
     }
@@ -50,6 +52,12 @@ public class AttendanceRequest {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
 }
-
-

@@ -174,6 +174,48 @@ class SessionManager(context: Context) {
 
     fun getTasksSubmissionSnapshot(): String? = prefs.getString(KEY_TASKS_SUBMISSION_SNAPSHOT, null)
 
+    fun saveProfessorAttendanceHistorySnapshot(snapshotJson: String?) {
+        val scopedKey = professorAttendanceHistorySnapshotKey()
+        if (snapshotJson.isNullOrBlank()) {
+            prefs.edit().remove(scopedKey).apply()
+        } else {
+            prefs.edit().putString(scopedKey, snapshotJson).apply()
+        }
+    }
+
+    fun getProfessorAttendanceHistorySnapshot(): String? {
+        val scopedKey = professorAttendanceHistorySnapshotKey()
+        val scopedValue = prefs.getString(scopedKey, null)
+        if (!scopedValue.isNullOrBlank()) {
+            return scopedValue
+        }
+
+        // Backward compatibility for previously saved shared history.
+        val legacyValue = prefs.getString(KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT, null)
+        if (!legacyValue.isNullOrBlank() && scopedKey != KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT) {
+            prefs.edit().putString(scopedKey, legacyValue).apply()
+        }
+        return legacyValue
+    }
+
+    private fun professorAttendanceHistorySnapshotKey(): String {
+        val email = getSavedEmail().orEmpty().trim().lowercase()
+        if (email.isBlank()) {
+            return KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT
+        }
+
+        val normalized = email
+            .replace(Regex("[^a-z0-9]"), "_")
+            .replace(Regex("_+"), "_")
+            .trim('_')
+
+        return if (normalized.isBlank()) {
+            KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT
+        } else {
+            "${KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT}_$normalized"
+        }
+    }
+
     private fun deriveDisplayNameFromEmail(email: String?): String? {
         val localPart = email
             ?.substringBefore('@')
@@ -214,5 +256,6 @@ class SessionManager(context: Context) {
         private const val KEY_ATTENDANCE_MONTHLY_INSIGHTS_SNAPSHOT = "attendance_monthly_insights_snapshot"
         private const val KEY_ATTENDANCE_SEMESTER_INSIGHTS_SNAPSHOT = "attendance_semester_insights_snapshot"
         private const val KEY_TASKS_SUBMISSION_SNAPSHOT = "tasks_submission_snapshot"
+        private const val KEY_PROFESSOR_ATTENDANCE_HISTORY_SNAPSHOT = "professor_attendance_history_snapshot"
     }
 }

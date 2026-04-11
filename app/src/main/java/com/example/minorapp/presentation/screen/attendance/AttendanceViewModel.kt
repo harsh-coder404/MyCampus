@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.minorapp.data.attendance.AttendanceInsightStatData
 import com.example.minorapp.data.attendance.AttendanceInsightsResult
 import com.example.minorapp.data.attendance.AttendanceRepository
+import com.example.minorapp.data.attendance.QrAttendanceRepository
+import com.example.minorapp.data.attendance.AttendanceQrResult
 import com.example.minorapp.data.session.SessionManager
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.SharedAcademicMetricsResolver
@@ -58,7 +60,11 @@ data class AttendanceUiState(
     val monthlySummaryStats: List<AttendanceSummaryStatUi>,
     val semesterSummaryStats: List<AttendanceSummaryStatUi>,
     val subjects: List<AttendanceSubjectUi>,
-    val heatmapColors: List<Color>
+    val heatmapColors: List<Color>,
+    val isMarkingQrAttendance: Boolean = false,
+    val qrResultMessage: String? = null,
+    val markedSessionIds: Set<String> = emptySet(),
+    val shouldForceReauth: Boolean = false
 ) {
     val activeSummaryStats: List<AttendanceSummaryStatUi>
         get() = when (selectedInsightsPeriod) {
@@ -69,7 +75,8 @@ data class AttendanceUiState(
 
 class AttendanceViewModel(
     private val sessionManager: SessionManager,
-    private val attendanceRepository: AttendanceRepository
+    private val attendanceRepository: AttendanceRepository,
+    private val qrAttendanceRepository: QrAttendanceRepository
 ) : ViewModel() {
     var uiState by mutableStateOf(initialAttendanceUiState(sessionManager))
         private set
@@ -81,12 +88,13 @@ class AttendanceViewModel(
     companion object {
         fun factory(
             sessionManager: SessionManager,
-            attendanceRepository: AttendanceRepository
+            attendanceRepository: AttendanceRepository,
+            qrAttendanceRepository: QrAttendanceRepository
         ): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return AttendanceViewModel(sessionManager, attendanceRepository) as T
+                    return AttendanceViewModel(sessionManager, attendanceRepository, qrAttendanceRepository) as T
                 }
             }
         }
@@ -113,15 +121,27 @@ class AttendanceViewModel(
             val monthlyDeferred = async { attendanceRepository.fetchMonthlyInsights(accessToken) }
             val semesterDeferred = async { attendanceRepository.fetchSemesterInsights(accessToken) }
 
+            val monthlyResult = monthlyDeferred.await()
+            val semesterResult = semesterDeferred.await()
+
+            if (monthlyResult is AttendanceInsightsResult.Failure && isUnauthorizedError(monthlyResult.message)) {
+                triggerForcedReauth(monthlyResult.message)
+                return@launch
+            }
+            if (semesterResult is AttendanceInsightsResult.Failure && isUnauthorizedError(semesterResult.message)) {
+                triggerForcedReauth(semesterResult.message)
+                return@launch
+            }
+
             val monthlyStats = resolveStats(
-                result = monthlyDeferred.await(),
+                result = monthlyResult,
                 cachedSnapshot = sessionManager.getAttendanceMonthlyInsightsSnapshot(),
                 saveSnapshot = sessionManager::saveAttendanceMonthlyInsightsSnapshot,
                 defaultStats = uiState.monthlySummaryStats
             )
 
             val semesterStats = resolveStats(
-                result = semesterDeferred.await(),
+                result = semesterResult,
                 cachedSnapshot = sessionManager.getAttendanceSemesterInsightsSnapshot(),
                 saveSnapshot = sessionManager::saveAttendanceSemesterInsightsSnapshot,
                 defaultStats = uiState.semesterSummaryStats
@@ -157,6 +177,83 @@ class AttendanceViewModel(
                 cachedSnapshot.toSummaryStatsOrNull() ?: defaultStats
             }
         }
+    }
+
+    fun onQrResultMessageShown() {
+        uiState = uiState.copy(qrResultMessage = null)
+    }
+
+    fun onForceReauthHandled() {
+        uiState = uiState.copy(shouldForceReauth = false)
+    }
+
+    fun onScanQrPayload(payload: String, deviceId: String?) {
+        val root = runCatching { JSONObject(payload) }.getOrNull()
+        if (root == null) {
+            uiState = uiState.copy(qrResultMessage = "Invalid QR payload.")
+            return
+        }
+
+        val courseId = root.optLong("courseId", -1L)
+        val sessionId = root.optString("sessionId").trim()
+        val timestamp = root.optLong("timestamp", 0L)
+
+        if (courseId <= 0 || sessionId.isBlank() || timestamp <= 0) {
+            uiState = uiState.copy(qrResultMessage = "Invalid QR payload.")
+            return
+        }
+
+        if (uiState.markedSessionIds.contains(sessionId)) {
+            uiState = uiState.copy(qrResultMessage = "Attendance already marked for this session.")
+            return
+        }
+
+        viewModelScope.launch {
+            uiState = uiState.copy(isMarkingQrAttendance = true, qrResultMessage = null)
+            when (
+                val result = qrAttendanceRepository.markAttendanceWithQr(
+                    accessToken = sessionManager.getAccessToken(),
+                    courseId = courseId,
+                    sessionId = sessionId,
+                    timestamp = timestamp,
+                    studentId = sessionManager.getSavedEmail(),
+                    deviceId = deviceId
+                )
+            ) {
+                is AttendanceQrResult.Success -> {
+                    uiState = uiState.copy(
+                        isMarkingQrAttendance = false,
+                        qrResultMessage = result.message,
+                        markedSessionIds = uiState.markedSessionIds + sessionId
+                    )
+                }
+
+                is AttendanceQrResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                        return@launch
+                    }
+                    uiState = uiState.copy(
+                        isMarkingQrAttendance = false,
+                        qrResultMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    private fun triggerForcedReauth(message: String) {
+        sessionManager.clearSession()
+        uiState = uiState.copy(
+            isMarkingQrAttendance = false,
+            qrResultMessage = message,
+            shouldForceReauth = true
+        )
+    }
+
+    private fun isUnauthorizedError(message: String): Boolean {
+        val normalized = message.lowercase()
+        return normalized.contains("unauthorized") || normalized.contains("session expired") || normalized.contains("login again")
     }
 }
 

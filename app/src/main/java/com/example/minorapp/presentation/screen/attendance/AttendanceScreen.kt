@@ -1,5 +1,8 @@
 package com.example.minorapp.presentation.screen.attendance
 
+import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,22 +16,31 @@ import androidx.compose.material.icons.outlined.BackHand
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.RowScope
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.MyCampusTopBar
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AttendanceScreen(
     uiState: AttendanceUiState,
     onInsightsPeriodSelected: (AttendanceInsightsPeriod) -> Unit,
+    onScanQrPayload: (String, String?) -> Unit,
+    onQrResultMessageShown: () -> Unit,
     onNavigateToDashboard: () -> Unit,
     onNavigateToTasks: () -> Unit = {},
     onNavigateToSummary: () -> Unit = {},
@@ -36,6 +48,28 @@ fun AttendanceScreen(
     onLogoutClick: () -> Unit = {}
 ) {
     val displayedSummaryStats = uiState.activeSummaryStats.take(3)
+    val context = LocalContext.current
+    var inlineDuplicateMessage by remember { mutableStateOf<String?>(null) }
+    val deviceId = remember(context) {
+        runCatching { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) }.getOrNull()
+    }
+    val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
+        val payload = result.contents
+        if (!payload.isNullOrBlank()) {
+            onScanQrPayload(payload, deviceId)
+        }
+    }
+
+    LaunchedEffect(uiState.qrResultMessage) {
+        val message = uiState.qrResultMessage ?: return@LaunchedEffect
+        if (message.contains("already marked", ignoreCase = true)) {
+            inlineDuplicateMessage = message
+        } else if (message.contains("success", ignoreCase = true)) {
+            inlineDuplicateMessage = null
+        }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        onQrResultMessageShown()
+    }
 
     Scaffold(
         topBar = {
@@ -90,6 +124,39 @@ fun AttendanceScreen(
                 .padding(20.dp)
         ) {
             OverallPresenceCard(uiState = uiState)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    inlineDuplicateMessage = null
+                    val options = ScanOptions().apply {
+                        setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                        setPrompt("Scan attendance QR")
+                        setBeepEnabled(false)
+                        setOrientationLocked(false)
+                    }
+                    qrLauncher.launch(options)
+                },
+                enabled = !uiState.isMarkingQrAttendance,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+            ) {
+                Text(
+                    text = if (uiState.isMarkingQrAttendance) "Verifying..." else "Scan QR",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            inlineDuplicateMessage?.let { duplicateMessage ->
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = duplicateMessage,
+                    color = Color(0xFFB54708),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

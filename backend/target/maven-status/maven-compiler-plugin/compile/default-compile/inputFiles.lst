@@ -3,6 +3,7 @@ D:\MinorApp\backend\src\main\java\com\example\minorapp\config\SecurityConfig.jav
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\AttendanceController.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\AuthController.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\CourseController.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\DashboardController.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\LibraryController.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\SubmissionController.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\controller\TaskController.java
@@ -10,11 +11,19 @@ D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\ApiResponse.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\AttendanceRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\AuthResponse.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\ChangePasswordRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\FinalizeAttendanceSessionRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\FinalizeAttendanceSessionResponse.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\LoginRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\ProfessorAttendanceRosterResponse.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\ProfessorCourseResponse.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\QrAttendanceMarkRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\RegisterRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\StartAttendanceSessionRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\StartAttendanceSessionResponse.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\TaskRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\VerifyIdentityRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Attendance.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\model\AttendanceSession.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Book.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Course.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Enrollment.java
@@ -23,6 +32,7 @@ D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Task.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\User.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\MyCampusApplication.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\repository\AttendanceRepository.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\repository\AttendanceSessionRepository.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\repository\BookRepository.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\repository\CourseRepository.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\repository\EnrollmentRepository.java

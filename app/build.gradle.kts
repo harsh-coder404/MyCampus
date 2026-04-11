@@ -66,6 +66,10 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
+    // QR scanning
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.zxing.core)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

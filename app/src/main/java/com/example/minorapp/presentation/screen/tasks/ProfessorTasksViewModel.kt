@@ -51,7 +51,8 @@ data class ProfessorTasksUiState(
     val submissionChecklist: List<SubmissionChecklistItemUi> = emptyList(),
     val profileImageUri: Uri? = null,
     val isCategoryDropdownExpanded: Boolean = false,
-    val statusMessage: String? = null
+    val statusMessage: String? = null,
+    val shouldForceReauth: Boolean = false
 )
 
 data class SubmissionChecklistItemUi(
@@ -159,10 +160,18 @@ class ProfessorTasksViewModel(
                 }
 
                 is ProfessorTaskCreateResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                        return@launch
+                    }
                     uiState = uiState.copy(statusMessage = result.message)
                 }
             }
         }
+    }
+
+    fun onForceReauthHandled() {
+        uiState = uiState.copy(shouldForceReauth = false)
     }
 
     fun onSelectChecklistTask(taskId: String) {
@@ -209,6 +218,10 @@ class ProfessorTasksViewModel(
                 }
 
                 is SubmissionChecklistResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                        return@launch
+                    }
                     if (!fromPolling) {
                         uiState = uiState.copy(
                             submissionChecklist = emptyList(),
@@ -218,6 +231,20 @@ class ProfessorTasksViewModel(
                 }
             }
         }
+    }
+
+    private fun triggerForcedReauth(message: String) {
+        sessionManager.clearSession()
+        stopChecklistPolling()
+        uiState = uiState.copy(
+            statusMessage = message,
+            shouldForceReauth = true
+        )
+    }
+
+    private fun isUnauthorizedError(message: String): Boolean {
+        val normalized = message.lowercase()
+        return normalized.contains("unauthorized") || normalized.contains("session expired") || normalized.contains("login again")
     }
 
     companion object {

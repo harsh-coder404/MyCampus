@@ -12,7 +12,6 @@ public class LoginRequest {
     @NotBlank
     private String password;
 
-    @NotBlank
     private String role;
 
     public String getEmail() {

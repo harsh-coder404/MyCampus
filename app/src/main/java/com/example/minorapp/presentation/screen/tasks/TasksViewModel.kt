@@ -66,7 +66,8 @@ data class TasksUiState(
     val tasks: List<TaskItemUi> = emptyList(),
     val taskHistory: List<TaskHistoryEventUi> = emptyList(),
     val issuedHistoryTaskIds: Set<String> = emptySet(),
-    val closedHistoryTaskIds: Set<String> = emptySet()
+    val closedHistoryTaskIds: Set<String> = emptySet(),
+    val shouldForceReauth: Boolean = false
 ) {
     val activeTasks: List<TaskItemUi>
         get() = tasks.filterNot { isTaskExpired(it) }
@@ -299,11 +300,19 @@ class TasksViewModel(
         )
 
         viewModelScope.launch {
-            when (repository.submitTask(sessionManager.getAccessToken(), activeTaskId)) {
+            when (val result = repository.submitTask(sessionManager.getAccessToken(), activeTaskId)) {
                 is TaskSubmissionSyncResult.Success -> Unit
-                is TaskSubmissionSyncResult.Failure -> Unit
+                is TaskSubmissionSyncResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                    }
+                }
             }
         }
+    }
+
+    fun onForceReauthHandled() {
+        uiState = uiState.copy(shouldForceReauth = false)
     }
 
     fun onDeleteCustomTask(taskId: String) {
@@ -669,9 +678,23 @@ class TasksViewModel(
                     )
                 }
 
-                is RemoteTasksSyncResult.Failure -> Unit
+                is RemoteTasksSyncResult.Failure -> {
+                    if (isUnauthorizedError(result.message)) {
+                        triggerForcedReauth(result.message)
+                    }
+                }
             }
         }
+    }
+
+    private fun triggerForcedReauth(message: String) {
+        sessionManager.clearSession()
+        uiState = uiState.copy(shouldForceReauth = true)
+    }
+
+    private fun isUnauthorizedError(message: String): Boolean {
+        val normalized = message.lowercase()
+        return normalized.contains("unauthorized") || normalized.contains("session expired") || normalized.contains("login again")
     }
 
     companion object {
