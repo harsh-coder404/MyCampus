@@ -14,6 +14,7 @@ MyCampus backend is a Spring Boot API with:
 - Seeded classes and enrollments (`CSE-A`, `IT`, `DSA`) with 10 students each
 - Task creation/submission APIs used by both student and professor app flows
 - Professor submission checklist API (used with client-side auto-refresh polling)
+- Automatic attendance via QR code (professor starts session, student scans/marks, professor finalizes)
 - Extendable endpoints for courses, attendance, and library
 
 ## Tech Stack
@@ -83,10 +84,24 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
   - `GET /tasks/my`, `GET /tasks/professor/my`
   - `POST /submissions`, `GET /submissions/student/{id}`
   - `GET /submissions/task/{id}/checklist`
+- Implemented QR attendance endpoints:
+  - `POST /attendance/sessions/start`
+  - `POST /attendance/mark`
+  - `POST /attendance/sessions/finalize`
+  - `GET /attendance/professor/courses`
+  - `GET /attendance/professor/roster/{courseId}`
 - Scaffolded/extendable endpoints:
   - `POST /courses`, `GET /courses`
-  - `POST /attendance/mark`, `GET /attendance/student/{id}`
+  - `POST /attendance/mark/manual`, `GET /attendance/student/{id}`
   - `GET /library/books`
+
+## QR Attendance (Automatic)
+
+- Professor starts a short-lived attendance session for a class.
+- Backend returns `courseId`, `sessionId`, `timestamp`, `expiresAtEpochSec`, and QR payload.
+- Student marks attendance using QR payload data.
+- Backend enforces session validity window and one-time attendance per student per session.
+- After expiry, professor finalizes session to lock present/absent results for the class.
 
 ## Test Credentials (Seeded)
 
@@ -103,6 +118,11 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 - Create a class task with `POST /tasks`.
 - Authenticate as a student (for example `harsh_@abc.com`) and submit work using `POST /submissions`.
 - Verify professor checklist updates through `GET /submissions/task/{id}/checklist` (Android client polls every `5s`).
+- QR attendance quick flow:
+  - Professor: `POST /attendance/sessions/start`
+  - Student: `POST /attendance/mark`
+  - Duplicate mark is blocked (`409`)
+  - Professor (after expiry): `POST /attendance/sessions/finalize`
 
 ## Prerequisites
 
@@ -153,3 +173,4 @@ If backend runs on default `8080`, either:
 - Backend package namespace is `com.example.minorapp`.
 - Root onboarding/documentation is in `README.md`.
 - This backend is MVP-focused and ready for iterative expansion of role rules and domain validations.
+

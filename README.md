@@ -1,4 +1,4 @@
-# MyCampus (Minor Project)
+# MyCampus 
 
 MyCampus is a full-stack academic app with:
 - `Android` client built using Jetpack Compose (`app/`)
@@ -15,6 +15,7 @@ MyCampus is a full-stack academic app with:
 - Seeded class data (`CSE-A`, `IT`, `DSA`) and seeded student credentials for testing
 - Student task submission flow and professor checklist flow wired to backend APIs
 - Professor-side checklist auto-refresh polling enabled (`5s`, configurable)
+- Automatic attendance via QR code (start session -> student mark -> one-time validation -> finalize)
 
 ## Tech Stack
 
@@ -56,10 +57,23 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
   - `GET /tasks/my`, `GET /tasks/professor/my`
   - `POST /submissions`, `GET /submissions/student/{id}`
   - `GET /submissions/task/{id}/checklist`
+- Implemented QR attendance endpoints:
+  - `POST /attendance/sessions/start`
+  - `POST /attendance/mark`
+  - `POST /attendance/sessions/finalize`
+  - `GET /attendance/professor/courses`
+  - `GET /attendance/professor/roster/{courseId}`
 - Scaffolded/extendable endpoints:
   - `POST /courses`, `GET /courses`
-  - `POST /attendance/mark`, `GET /attendance/student/{id}`
+  - `POST /attendance/mark/manual`, `GET /attendance/student/{id}`
   - `GET /library/books`
+
+## QR Attendance (Automatic)
+
+- Professor starts attendance for a selected class, and backend creates a short-lived QR session.
+- Student scans/uses QR payload and attendance is marked against the authenticated account.
+- Backend validates session window and blocks duplicate attendance for the same session.
+- After session expiry, professor finalizes attendance and present/absent status is locked.
 
 ## Test Credentials (Seeded)
 
@@ -67,8 +81,9 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 - `proff@abc.com` / `Proff@12` for proffessor login
 - Additional seeded students are auto-created from class rosters using:
   - Email pattern: `<name_or_nameN>_@abc.com`
-  - Password pattern: `<Name_or_NameN>_A@12`
+  - Password pattern: `<Name>_A@12`
   - Example: `harsh_@abc.com` / `Harsh_A@12`
+  - Seeded student names: `Harsh`, `Aryan`, `Aryan2`, `Raju`, `Bheem`, `Hari`, `Arjun`, `Krishna`, `Virat`, `Rohit`
 
 ## End-to-End Test Flow
 
@@ -76,6 +91,11 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 - From professor task flow, create a new task (`POST /tasks`) for a class.
 - Login as student (for example `harsh_@abc.com`), open tasks, and submit PDF (`POST /submissions`).
 - Re-open professor checklist for that task; auto-refresh (`5s`) should reflect updated submission status via `GET /submissions/task/{id}/checklist`.
+- QR attendance quick flow:
+  - Professor: `POST /attendance/sessions/start`
+  - Student: `POST /attendance/mark`
+  - Duplicate mark is blocked (`409`)
+  - Professor (after expiry): `POST /attendance/sessions/finalize`
 
 ## Prerequisites
 
@@ -129,3 +149,4 @@ Or open `D:\MinorApp` in Android Studio and run the `app` configuration.
 - Professor checklist polling interval constant is `app/src/main/java/com/example/minorapp/domain/constants/AppTimingConstants.kt`.
 - Root doc is onboarding-focused; backend API details are in `backend/README.md`.
 - This repository is maintained as an academic minor project MVP and is intended for iterative expansion.
+
