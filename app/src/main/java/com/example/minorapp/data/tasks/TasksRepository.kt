@@ -8,6 +8,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -29,7 +32,8 @@ data class TaskData(
     val issuedSortKey: Int,
     val uploadedPdfUri: String? = null,
     val submissionTimestampText: String? = null,
-    val completedBeforeDeadline: Boolean? = null
+    val completedBeforeDeadline: Boolean? = null,
+    val editedTimestampText: String? = null
 )
 
 interface TasksRepository {
@@ -154,6 +158,7 @@ class BackendTasksRepository(
                 val deadlineText = item.optString("deadline")
                 val deadlineDate = runCatching { LocalDate.parse(deadlineText) }.getOrNull()
                 val sortKey = deadlineDate?.let { toSortKey(it) }
+                val editedTimestampText = item.optString("updatedAt").ifBlank { null }?.toEditedTimestampText()
 
                 add(
                     TaskData(
@@ -167,11 +172,24 @@ class BackendTasksRepository(
                         dueText = deadlineDate?.toDueText(now),
                         isDueSoon = deadlineDate?.isDueSoon(now) == true,
                         deadlineSortKey = sortKey,
-                        issuedSortKey = now.let { toSortKey(it) }
+                        issuedSortKey = now.let { toSortKey(it) },
+                        editedTimestampText = editedTimestampText
                     )
                 )
             }
         }
+    }
+
+    private fun String.toEditedTimestampText(): String? {
+        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a", Locale.ENGLISH)
+
+        runCatching {
+            return "Edited ${OffsetDateTime.parse(this).atZoneSameInstant(ZoneId.systemDefault()).format(formatter)}"
+        }
+        runCatching {
+            return "Edited ${LocalDateTime.parse(this).atZone(ZoneId.systemDefault()).format(formatter)}"
+        }
+        return null
     }
 
     private fun toSortKey(date: LocalDate): Int = (date.year * 10000) + (date.monthValue * 100) + date.dayOfMonth

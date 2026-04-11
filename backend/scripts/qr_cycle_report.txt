@@ -1,0 +1,12 @@
+OVERALL: PASS
+
+
+Step                 Expected            Actual                         Result
+----                 --------            ------                         ------
+Start                SUCCESS + sessionId SUCCESS / SESSION_660E2CADDFFF PASS  
+Mark                 SUCCESS             SUCCESS                        PASS  
+Duplicate Mark Block HTTP 409            HTTP 409                       PASS  
+Finalize             SUCCESS + totals    SUCCESS / present=1, total=21  PASS  
+
+
+

@@ -1,3 +1,4 @@
+com\example\minorapp\dto\TaskUpdateRequest.class
 com\example\minorapp\service\AttendanceService.class
 com\example\minorapp\controller\TaskController.class
 com\example\minorapp\model\Enrollment.class

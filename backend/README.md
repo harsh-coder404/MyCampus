@@ -16,6 +16,7 @@ MyCampus backend is a Spring Boot API with:
 - Professor submission checklist API (used with client-side auto-refresh polling)
 - Automatic attendance via QR code (professor starts session, student scans/marks, professor finalizes)
 - Extendable endpoints for courses, attendance, and library
+- Android client now supports professor task edit dialog + confirmation and student custom-task editing
 
 ## Tech Stack
 
@@ -108,9 +109,10 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 - `student@abc.com` / `Stu@12`
 - `proff@abc.com` / `Proff@12`
 - Additional seeded students are auto-created from class rosters using:
-  - Email pattern: `<name_or_nameN>_@abc.com`
-  - Password pattern: `<Name_or_NameN>_A@12`
+  - Email pattern: `<name>_@abc.com`
+  - Password pattern: `<Name>_A@12`
   - Example: `harsh_@abc.com` / `Harsh_A@12`
+  -Seeded student names: `Harsh`, `Aryan`, `Aryan2`, `Raju`, `Bheem`, `Hari`, `Arjun`, `Krishna`, `Virat`, `Rohit`
 
 ## End-to-End Test Flow
 
@@ -141,14 +143,14 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 2. Start backend:
 
 ```powershell
-Set-Location "D:\MinorApp\backend"
+Set-Location "<project file location>\\backend"
 .\mvnw.cmd spring-boot:run
 ```
 
 3. Build backend JAR (optional):
 
 ```powershell
-Set-Location "D:\MinorApp\backend"
+Set-Location "<project file location>\\backend"
 .\mvnw.cmd -DskipTests package
 ```
 

@@ -9,20 +9,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.BackHand
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Star
@@ -36,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -46,8 +37,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import com.example.minorapp.data.tasks.TaskStatus
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.MyCampusTopBar
-import androidx.core.net.toUri
-import coil.compose.AsyncImage
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -63,6 +52,7 @@ fun TasksScreen(
     onPriorityTaskClick: (String) -> Unit,
     onDeleteSubmittedPdf: (String) -> Unit,
     onDeleteCustomTask: (String) -> Unit,
+    onEditCustomTask: (taskId: String, title: String, description: String, deadline: LocalDate, submitWork: Boolean) -> Unit,
     onCreateTask: (title: String, description: String, deadline: LocalDate, submitWork: Boolean) -> Unit,
     onUploadPdfClick: () -> Unit,
     onDismissUploadDialog: () -> Unit,
@@ -78,6 +68,7 @@ fun TasksScreen(
     var subjectsExpanded by remember { mutableStateOf(false) }
     var pendingDeleteTaskId by remember { mutableStateOf<String?>(null) }
     var pendingDeleteCustomTaskId by remember { mutableStateOf<String?>(null) }
+    var pendingEditCustomTaskId by remember { mutableStateOf<String?>(null) }
     var showCreateTaskDialog by remember { mutableStateOf(false) }
     var taskTitle by remember { mutableStateOf("") }
     var taskDescription by remember { mutableStateOf("") }
@@ -85,11 +76,18 @@ fun TasksScreen(
     var selectedDeadlineMillis by remember { mutableStateOf<Long?>(null) }
     var deadlineInputText by remember { mutableStateOf("") }
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    var editTaskTitle by remember { mutableStateOf("") }
+    var editTaskDescription by remember { mutableStateOf("") }
+    var editSubmitWorkChecked by remember { mutableStateOf(true) }
+    var editSelectedDeadlineMillis by remember { mutableStateOf<Long?>(null) }
+    var editDeadlineInputText by remember { mutableStateOf("") }
+    var showEditDeadlinePicker by remember { mutableStateOf(false) }
 
     val selectedDeadlineDate = selectedDeadlineMillis?.let {
         Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
     }
     val parsedDeadlineDate = runCatching { LocalDate.parse(deadlineInputText.trim()) }.getOrNull()
+    val parsedEditDeadlineDate = runCatching { LocalDate.parse(editDeadlineInputText.trim()) }.getOrNull()
 
     if (showDeadlinePicker) {
         val deadlinePickerState = rememberDatePickerState(
@@ -113,6 +111,36 @@ fun TasksScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeadlinePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = deadlinePickerState)
+        }
+    }
+
+    if (showEditDeadlinePicker) {
+        val deadlinePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = editSelectedDeadlineMillis
+        )
+        DatePickerDialog(
+            onDismissRequest = { showEditDeadlinePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val pickedMillis = deadlinePickerState.selectedDateMillis
+                        editSelectedDeadlineMillis = pickedMillis
+                        editDeadlineInputText = pickedMillis?.let {
+                            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+                        }.orEmpty()
+                        showEditDeadlinePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDeadlinePicker = false }) {
                     Text("Cancel")
                 }
             }
@@ -334,6 +362,123 @@ fun TasksScreen(
             },
             dismissButton = {
                 TextButton(onClick = { pendingDeleteCustomTaskId = null }) {
+                    Text("Cancel", color = Color.White)
+                }
+            }
+        )
+    }
+
+    if (pendingEditCustomTaskId != null) {
+        AlertDialog(
+            onDismissRequest = { pendingEditCustomTaskId = null },
+            containerColor = Color(0xFF0F172A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White,
+            title = { Text("Edit task", color = Color.White) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = editTaskTitle,
+                        onValueChange = { editTaskTitle = it },
+                        label = { Text("Task Title", color = Color.White) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color(0xFF94A3B8),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color(0xFFCBD5E1),
+                            cursorColor = Color.White
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = editTaskDescription,
+                        onValueChange = { editTaskDescription = it },
+                        label = { Text("Description", color = Color.White) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color(0xFF94A3B8),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color(0xFFCBD5E1),
+                            cursorColor = Color.White
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                    OutlinedTextField(
+                        value = editDeadlineInputText,
+                        onValueChange = {
+                            editDeadlineInputText = it
+                            editSelectedDeadlineMillis = null
+                        },
+                        label = { Text("Deadline", color = Color.White) },
+                        placeholder = { Text("YYYY-MM-DD", color = Color(0xFFCBD5E1)) },
+                        singleLine = true,
+                        isError = editDeadlineInputText.isNotBlank() && parsedEditDeadlineDate == null,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color(0xFF94A3B8),
+                            errorBorderColor = Color(0xFFF87171),
+                            errorLabelColor = Color(0xFFFCA5A5),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color(0xFFCBD5E1),
+                            cursorColor = Color.White,
+                            focusedTrailingIconColor = Color.White,
+                            unfocusedTrailingIconColor = Color(0xFFCBD5E1)
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { showEditDeadlinePicker = true }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CalendarToday,
+                                    contentDescription = "Select Deadline"
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        supportingText = {
+                            if (editDeadlineInputText.isNotBlank() && parsedEditDeadlineDate == null) {
+                                Text("Enter date as YYYY-MM-DD", color = Color.White)
+                            }
+                        }
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Checkbox(
+                            checked = editSubmitWorkChecked,
+                            onCheckedChange = { editSubmitWorkChecked = it }
+                        )
+                        Text(
+                            text = "Submit Work: ${if (editSubmitWorkChecked) "Yes" else "No"}",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val taskId = pendingEditCustomTaskId ?: return@TextButton
+                        val deadline = parsedEditDeadlineDate ?: return@TextButton
+                        onEditCustomTask(taskId, editTaskTitle, editTaskDescription, deadline, editSubmitWorkChecked)
+                        pendingEditCustomTaskId = null
+                    },
+                    enabled = editTaskTitle.isNotBlank() && parsedEditDeadlineDate != null
+                ) {
+                    Text("Update", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingEditCustomTaskId = null }) {
                     Text("Cancel", color = Color.White)
                 }
             }
@@ -730,6 +875,35 @@ fun TasksScreen(
                     } else {
                         null
                     },
+                    onEditTask = if (isCustomTask) {
+                        {
+                            pendingEditCustomTaskId = task.id
+                            editTaskTitle = task.title
+                            editTaskDescription = task.description
+                            editSubmitWorkChecked = task.requiresSubmission
+                            val deadlineDate = task.deadlineSortKey?.let { key ->
+                                val raw = key.toString()
+                                if (raw.length == 8) {
+                                    runCatching {
+                                        LocalDate.of(
+                                            raw.substring(0, 4).toInt(),
+                                            raw.substring(4, 6).toInt(),
+                                            raw.substring(6, 8).toInt()
+                                        )
+                                    }.getOrNull()
+                                } else {
+                                    null
+                                }
+                            }
+                            editSelectedDeadlineMillis = deadlineDate
+                                ?.atStartOfDay(ZoneId.systemDefault())
+                                ?.toInstant()
+                                ?.toEpochMilli()
+                            editDeadlineInputText = deadlineDate?.toString().orEmpty()
+                        }
+                    } else {
+                        null
+                    },
                     onPreviewUploadedPdf = if (task.uploadedPdfUri != null && !isClosed) {
                         { onPreviewUploadedPdf(task.uploadedPdfUri) }
                     } else {
@@ -754,6 +928,7 @@ fun TaskCard(
     onPriorityClick: (() -> Unit)? = null,
     onDeleteSubmittedPdf: (() -> Unit)? = null,
     onDeleteTask: (() -> Unit)? = null,
+    onEditTask: (() -> Unit)? = null,
     onPreviewUploadedPdf: (() -> Unit)? = null
 ) {
     val isCompleted = task.status == TaskStatus.COMPLETED.name
@@ -840,6 +1015,18 @@ fun TaskCard(
                     }
                     if (onDeleteTask != null) {
                         IconButton(
+                            onClick = onEditTask ?: {},
+                            modifier = Modifier.size(24.dp),
+                            enabled = onEditTask != null
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = "Edit task",
+                                tint = Color(0xFF0265DC),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        IconButton(
                             onClick = onDeleteTask,
                             modifier = Modifier.size(24.dp)
                         ) {
@@ -860,6 +1047,30 @@ fun TaskCard(
                     lineHeight = 18.sp,
                     textDecoration = if (isClosed) TextDecoration.LineThrough else null
                 )
+                task.editedTimestampText?.let { editedText ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = Color(0xFFE0E7FF),
+                            shape = RoundedCornerShape(999.dp)
+                        ) {
+                            Text(
+                                text = "Edited",
+                                color = Color(0xFF3730A3),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = editedText.removePrefix("Edited "),
+                            color = Color(0xFF6366F1),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
                 if (isCompleted && onDeleteSubmittedPdf != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(

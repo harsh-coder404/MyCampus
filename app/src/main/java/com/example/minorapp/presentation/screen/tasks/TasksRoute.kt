@@ -53,20 +53,19 @@ fun TasksRoute(
     }
 
     TasksScreen(
-        uiState = viewModel.uiState,
-        onFilterSelected = viewModel::onFilterSelected,
-        onSortMenuExpandedChange = viewModel::onSortMenuExpandedChange,
-        onSortSelected = viewModel::onSortSelected,
-        onPendingTaskClick = viewModel::onPendingTaskClicked,
-        onPriorityTaskClick = viewModel::onPriorityTaskSelected,
-        onDeleteSubmittedPdf = viewModel::onDeleteSubmittedPdf,
-        onDeleteCustomTask = viewModel::onDeleteCustomTask,
-        onCreateTask = viewModel::onCreateTask,
-        onUploadPdfClick = {
-            pdfPickerLauncher.launch(arrayOf("application/pdf"))
-        },
-        onDismissUploadDialog = viewModel::onUploadDialogDismissed,
-        onPreviewUploadedPdf = { pdfUri ->
+        viewModel.uiState,
+        viewModel::onFilterSelected,
+        viewModel::onSortMenuExpandedChange,
+        viewModel::onSortSelected,
+        viewModel::onPendingTaskClicked,
+        viewModel::onPriorityTaskSelected,
+        viewModel::onDeleteSubmittedPdf,
+        viewModel::onDeleteCustomTask,
+        viewModel::onEditCustomTask,
+        viewModel::onCreateTask,
+        { pdfPickerLauncher.launch(arrayOf("application/pdf")) },
+        viewModel::onUploadDialogDismissed,
+        { pdfUri ->
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(Uri.parse(pdfUri), "application/pdf")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -77,10 +76,10 @@ fun TasksRoute(
                 Toast.makeText(context, "No app found to preview PDF", Toast.LENGTH_SHORT).show()
             }
         },
-        onNavigateToDashboard = onNavigateToDashboard,
-        onNavigateToAttendance = onNavigateToAttendance,
-        onNavigateToSummary = onNavigateToSummary,
-        onProfileClick = onProfileClick,
-        onLogoutClick = onLogoutClick
+        onNavigateToDashboard,
+        onNavigateToAttendance,
+        onNavigateToSummary,
+        onProfileClick,
+        onLogoutClick
     )
 }

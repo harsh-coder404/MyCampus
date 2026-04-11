@@ -2,6 +2,7 @@ package com.example.minorapp.controller;
 
 import com.example.minorapp.dto.ApiResponse;
 import com.example.minorapp.dto.TaskRequest;
+import com.example.minorapp.dto.TaskUpdateRequest;
 import com.example.minorapp.model.Task;
 import com.example.minorapp.service.TaskService;
 import com.example.minorapp.util.JwtUtil;
@@ -9,8 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,8 +34,9 @@ public class TaskController {
     }
 
     @PostMapping
-    public ApiResponse<Task> createTask(@Valid @RequestBody TaskRequest request) {
-        return new ApiResponse<>("SUCCESS", "Task created.", taskService.createTask(request));
+    public ApiResponse<Task> createTask(@Valid @RequestBody TaskRequest request, HttpServletRequest httpRequest) {
+        String email = extractAuthenticatedEmail(httpRequest);
+        return new ApiResponse<>("SUCCESS", "Task created.", taskService.createTask(request, email));
     }
 
     @GetMapping("/course/{id}")
@@ -50,6 +54,24 @@ public class TaskController {
     public ApiResponse<List<Task>> getForAuthenticatedProfessor(HttpServletRequest request) {
         String email = extractAuthenticatedEmail(request);
         return new ApiResponse<>("SUCCESS", "Tasks fetched.", taskService.getTasksForProfessorEmail(email));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Object> deleteTaskForAuthenticatedProfessor(@PathVariable("id") Long taskId, HttpServletRequest request) {
+        String email = extractAuthenticatedEmail(request);
+        taskService.deleteTaskForProfessor(taskId, email);
+        return new ApiResponse<>("SUCCESS", "Task deleted.", null);
+    }
+
+    @PutMapping("/{id}")
+    public ApiResponse<Task> updateTaskForAuthenticatedProfessor(
+        @PathVariable("id") Long taskId,
+        @Valid @RequestBody TaskUpdateRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        String email = extractAuthenticatedEmail(httpRequest);
+        Task updated = taskService.updateTaskForProfessor(taskId, request, email);
+        return new ApiResponse<>("SUCCESS", "Task updated.", updated);
     }
 
     private String extractAuthenticatedEmail(HttpServletRequest request) {

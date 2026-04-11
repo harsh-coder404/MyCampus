@@ -1,6 +1,5 @@
 package com.example.minorapp.presentation.screen.attendance
-
-import java.net.URLEncoder
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,12 +39,16 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.Image
 import androidx.compose.material3.OutlinedTextField
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -61,7 +64,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -410,15 +412,33 @@ private fun QrAttendanceControlCard(
 
 @Composable
 private fun QrPayloadImage(payload: String) {
-    val model = remember(payload) {
-        val encoded = URLEncoder.encode(payload, "UTF-8")
-        "https://api.qrserver.com/v1/create-qr-code/?size=360x360&data=$encoded"
+    val bitmap = remember(payload) {
+        runCatching { generateQrBitmap(payload, 720) }.getOrNull()
     }
-    AsyncImage(
-        model = model,
-        contentDescription = "Attendance QR",
-        modifier = Modifier.size(220.dp)
-    )
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "Attendance QR",
+            modifier = Modifier.size(220.dp)
+        )
+    } else {
+        Text(
+            text = "Unable to render QR",
+            color = Color(0xFFB42318),
+            fontSize = 12.sp
+        )
+    }
+}
+
+private fun generateQrBitmap(payload: String, size: Int): Bitmap {
+    val matrix = QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE, size, size)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    for (x in 0 until size) {
+        for (y in 0 until size) {
+            bitmap.setPixel(x, y, if (matrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
+    }
+    return bitmap
 }
 
 @Composable

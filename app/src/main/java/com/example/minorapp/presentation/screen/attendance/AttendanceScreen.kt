@@ -62,12 +62,19 @@ fun AttendanceScreen(
 
     LaunchedEffect(uiState.qrResultMessage) {
         val message = uiState.qrResultMessage ?: return@LaunchedEffect
+        val isSuccess = message.contains("success", ignoreCase = true) ||
+            message.contains("marked", ignoreCase = true)
         if (message.contains("already marked", ignoreCase = true)) {
             inlineDuplicateMessage = message
         } else if (message.contains("success", ignoreCase = true)) {
             inlineDuplicateMessage = null
         }
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        val toastText = if (isSuccess) {
+            "Attendance marking passed"
+        } else {
+            "Attendance marking failed"
+        }
+        Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
         onQrResultMessageShown()
     }
 

@@ -16,6 +16,8 @@ MyCampus is a full-stack academic app with:
 - Student task submission flow and professor checklist flow wired to backend APIs
 - Professor-side checklist auto-refresh polling enabled (`5s`, configurable)
 - Automatic attendance via QR code (start session -> student mark -> one-time validation -> finalize)
+- Professor task editing now uses a dedicated update dialog with post-update confirmation.
+- Student-created custom tasks can now be edited in the student task screen (edit dialog + persisted changes).
 
 ## Tech Stack
 
@@ -80,7 +82,7 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 - `student@abc.com` / `Stu@12` for student login
 - `proff@abc.com` / `Proff@12` for proffessor login
 - Additional seeded students are auto-created from class rosters using:
-  - Email pattern: `<name_or_nameN>_@abc.com`
+  - Email pattern: `<name>_@abc.com`
   - Password pattern: `<Name>_A@12`
   - Example: `harsh_@abc.com` / `Harsh_A@12`
   - Seeded student names: `Harsh`, `Aryan`, `Aryan2`, `Raju`, `Bheem`, `Hari`, `Arjun`, `Krishna`, `Virat`, `Rohit`
@@ -116,14 +118,14 @@ Response contract follows `status`, `message`, and `data` (token/user payload on
 3. Start backend from `backend/`:
 
 ```powershell
-Set-Location "D:\MinorApp\backend"
+Set-Location "<project file location>\\backend"
 .\mvnw.cmd spring-boot:run
 ```
 
 4. Build backend JAR (optional):
 
 ```powershell
-Set-Location "D:\MinorApp\backend"
+Set-Location "<project file location>\\backend"
 .\mvnw.cmd -DskipTests package
 ```
 
@@ -137,11 +139,11 @@ Set-Location "D:\MinorApp\backend"
 3. Build/run app:
 
 ```powershell
-Set-Location "D:\MinorApp"
+Set-Location "<project file location>"
 .\gradlew.bat assembleDebug
 ```
 
-Or open `D:\MinorApp` in Android Studio and run the `app` configuration.
+Or open `<project file location>` in Android Studio and run the `app` configuration.
 
 ## Notes
 

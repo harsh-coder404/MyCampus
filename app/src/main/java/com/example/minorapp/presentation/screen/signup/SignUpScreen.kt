@@ -202,7 +202,15 @@ fun SignUpScreen(
                 placeholder = "••••••••",
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null, tint = mutedText) },
                 keyboardType = KeyboardType.Password,
-                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    Icon(
+                        imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = null,
+                        tint = mutedText,
+                        modifier = Modifier.clickable { onShowPasswordChange(!showPassword) }
+                    )
+                }
             )
 
             if (infoMessage != null) {

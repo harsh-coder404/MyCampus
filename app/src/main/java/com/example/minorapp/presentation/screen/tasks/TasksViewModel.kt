@@ -51,7 +51,8 @@ data class TaskItemUi(
     val requiresSubmission: Boolean = true,
     val uploadedPdfUri: String? = null,
     val submissionTimestampText: String? = null,
-    val completedBeforeDeadline: Boolean? = null
+    val completedBeforeDeadline: Boolean? = null,
+    val editedTimestampText: String? = null
 )
 
 data class TasksUiState(
@@ -354,6 +355,71 @@ class TasksViewModel(
         )
     }
 
+    fun onEditCustomTask(
+        taskId: String,
+        title: String,
+        description: String,
+        deadline: LocalDate,
+        submitWork: Boolean
+    ) {
+        if (!taskId.startsWith("custom-")) return
+
+        val existing = uiState.tasks.firstOrNull { it.id == taskId } ?: return
+        val now = LocalDate.now()
+        val updatedDueText = deadline.toDueText(now)
+        val updatedIsDueSoon = deadline.isDueSoon(now)
+
+        val updatedTasks = uiState.tasks.map { task ->
+            if (task.id != taskId) return@map task
+
+            task.copy(
+                title = title.trim(),
+                description = description.trim(),
+                dateText = deadline.toDateText(),
+                dueText = if (task.status == TaskStatus.COMPLETED.name) null else updatedDueText,
+                isDueSoon = if (task.status == TaskStatus.COMPLETED.name) false else updatedIsDueSoon,
+                initialDueText = updatedDueText,
+                initialIsDueSoon = updatedIsDueSoon,
+                deadlineSortKey = deadline.toSortKey(),
+                requiresSubmission = submitWork,
+                editedTimestampText = createEditedTimestampText()
+            )
+        }
+
+        var updatedHistory = appendHistoryEvent(
+            existingHistory = uiState.taskHistory,
+            newEvent = TaskHistoryEventUi(
+                id = "edit:$taskId:${System.currentTimeMillis()}",
+                text = "task ${existing.title} updated",
+                eventEpochMillis = System.currentTimeMillis()
+            )
+        )
+
+        // Recompute closed event for this task if deadline changed.
+        updatedHistory = updatedHistory.filterNot { it.id == "closed:$taskId" }
+        val closedHistory = appendClosedEventsIfMissing(
+            tasks = updatedTasks,
+            existingHistory = updatedHistory,
+            closedTaskIds = uiState.closedHistoryTaskIds - taskId
+        )
+
+        uiState = uiState.copy(
+            tasks = updatedTasks,
+            completionRate = calculateCompletionRate(updatedTasks),
+            taskHistory = closedHistory.first,
+            closedHistoryTaskIds = closedHistory.second
+        )
+
+        persistTaskSubmissionSnapshot(
+            tasks = updatedTasks,
+            selectedPriorityTaskId = uiState.selectedPriorityTaskId,
+            isPriorityManuallyCleared = uiState.isPriorityManuallyCleared,
+            taskHistory = uiState.taskHistory,
+            issuedHistoryTaskIds = uiState.issuedHistoryTaskIds,
+            closedHistoryTaskIds = uiState.closedHistoryTaskIds
+        )
+    }
+
     fun onCreateTask(
         title: String,
         description: String,
@@ -432,7 +498,8 @@ class TasksViewModel(
         requiresSubmission = true,
         uploadedPdfUri = uploadedPdfUri,
         submissionTimestampText = submissionTimestampText,
-        completedBeforeDeadline = completedBeforeDeadline
+        completedBeforeDeadline = completedBeforeDeadline,
+        editedTimestampText = editedTimestampText
     )
 
     private fun loadInitialUiState(): TasksUiState {
@@ -551,6 +618,11 @@ class TasksViewModel(
     private fun createSubmissionTimestampText(nowMillis: Long = System.currentTimeMillis()): String {
         val formatter = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault())
         return "Submitted ${formatter.format(Date(nowMillis))}"
+    }
+
+    private fun createEditedTimestampText(nowMillis: Long = System.currentTimeMillis()): String {
+        val formatter = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.ENGLISH)
+        return "Edited ${formatter.format(Date(nowMillis))}"
     }
 
     private fun appendIssuedEventsIfMissing(

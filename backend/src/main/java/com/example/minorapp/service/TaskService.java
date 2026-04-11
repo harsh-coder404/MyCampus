@@ -1,6 +1,7 @@
 package com.example.minorapp.service;
 
 import com.example.minorapp.dto.TaskRequest;
+import com.example.minorapp.dto.TaskUpdateRequest;
 import com.example.minorapp.model.Course;
 import com.example.minorapp.model.Enrollment;
 import com.example.minorapp.model.Submission;
@@ -13,9 +14,11 @@ import com.example.minorapp.repository.TaskRepository;
 import com.example.minorapp.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,9 +48,20 @@ public class TaskService {
         this.userRepository = userRepository;
     }
 
-    public Task createTask(TaskRequest request) {
+    public Task createTask(TaskRequest request, String professorEmail) {
+        User professor = userRepository.findByEmail(professorEmail.toLowerCase())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor not found."));
+
+        if (!"PROFESSOR".equalsIgnoreCase(professor.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only professors can create tasks.");
+        }
+
         Course course = courseRepository.findById(request.getCourseId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found."));
+
+        if (course.getProfessor() == null || !course.getProfessor().getId().equals(professor.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only create tasks for your own courses.");
+        }
 
         Task task = new Task();
         task.setCourse(course);
@@ -85,6 +99,76 @@ public class TaskService {
 
         List<Long> courseIds = courses.stream().map(Course::getId).toList();
         return taskRepository.findByCourseIdIn(courseIds);
+    }
+
+    @Transactional
+    public void deleteTaskForProfessor(Long taskId, String professorEmail) {
+        Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found."));
+
+        User professor = userRepository.findByEmail(professorEmail.toLowerCase())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor not found."));
+
+        if (!"PROFESSOR".equalsIgnoreCase(professor.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only professors can delete tasks.");
+        }
+
+        if (task.getCourse() == null || task.getCourse().getProfessor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task course ownership is invalid.");
+        }
+
+        if (!canProfessorManageTask(professor, task)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own tasks.");
+        }
+
+        submissionRepository.deleteByTaskId(taskId);
+        taskRepository.delete(task);
+    }
+
+    @Transactional
+    public Task updateTaskForProfessor(Long taskId, TaskUpdateRequest request, String professorEmail) {
+        Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found."));
+
+        User professor = userRepository.findByEmail(professorEmail.toLowerCase())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Professor not found."));
+
+        if (!"PROFESSOR".equalsIgnoreCase(professor.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only professors can update tasks.");
+        }
+
+        if (task.getCourse() == null || task.getCourse().getProfessor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task course ownership is invalid.");
+        }
+
+        if (!canProfessorManageTask(professor, task)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own tasks.");
+        }
+
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setDeadline(request.getDeadline());
+        task.setUpdatedAt(LocalDateTime.now());
+        return taskRepository.save(task);
+    }
+
+    private boolean canProfessorManageTask(User professor, Task task) {
+        Course taskCourse = task.getCourse();
+        if (taskCourse == null || taskCourse.getId() == null) {
+            return false;
+        }
+
+        // Prefer direct ownership check from the task's course association.
+        if (taskCourse.getProfessor() != null && professor.getId().equals(taskCourse.getProfessor().getId())) {
+            return true;
+        }
+
+        // Fallback for legacy/inconsistent object graphs: verify via professor's course ids.
+        List<Long> professorCourseIds = courseRepository.findByProfessorId(professor.getId())
+            .stream()
+            .map(Course::getId)
+            .toList();
+        return professorCourseIds.contains(taskCourse.getId());
     }
 
     public Submission submit(Long taskId, Long studentId, String status) {

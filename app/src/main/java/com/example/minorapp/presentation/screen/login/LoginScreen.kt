@@ -26,7 +26,10 @@ import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.VerifiedUser
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -38,6 +41,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,6 +82,7 @@ fun LoginScreen(
     val sectionLabel = Color(0xFF263143)
     val inputBackground = Color(0xFFE6E8EC)
     val mutedText = Color(0xFF6B7280)
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.errorMessage) {
         if (uiState.errorMessage.equals("Wrong credentials", ignoreCase = true)) {
@@ -200,7 +209,16 @@ fun LoginScreen(
                     )
                 },
                 keyboardType = KeyboardType.Password,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                            tint = mutedText
+                        )
+                    }
+                },
                 background = inputBackground
             )
 
@@ -422,7 +440,8 @@ private fun InputField(
     placeholder: String,
     leadingIcon: @Composable () -> Unit,
     keyboardType: KeyboardType,
-    visualTransformation: androidx.compose.ui.text.input.VisualTransformation?,
+    visualTransformation: VisualTransformation?,
+    trailingIcon: @Composable (() -> Unit)? = null,
     background: Color
 ) {
     OutlinedTextField(
@@ -445,9 +464,10 @@ private fun InputField(
             )
         },
         leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         visualTransformation = visualTransformation
-            ?: androidx.compose.ui.text.input.VisualTransformation.None,
+            ?: VisualTransformation.None,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = background,
             unfocusedContainerColor = background,

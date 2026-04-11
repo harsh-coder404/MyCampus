@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Domain
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.*
@@ -26,13 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.minorapp.data.tasks.ProfessorTaskPriority
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.MyCampusTopBar
@@ -52,7 +48,20 @@ fun ProfessorTasksScreen(
     onCategoryDropdownToggle: () -> Unit,
     onCategoryDropdownHide: () -> Unit,
     onClassTargetSelected: (Long) -> Unit,
+    onEditTitleChange: (String) -> Unit,
+    onEditDescriptionChange: (String) -> Unit,
+    onEditDeadlineChange: (String) -> Unit,
+    onEditCategorySelect: (String) -> Unit,
+    onEditCategoryDropdownToggle: () -> Unit,
+    onEditCategoryDropdownHide: () -> Unit,
+    onEditClassTargetSelected: (Long) -> Unit,
     onSelectChecklistTask: (String) -> Unit,
+    onEditTask: (String) -> Unit,
+    onCancelEditTask: () -> Unit,
+    onDeleteTask: (String) -> Unit,
+    onUndoDeleteTask: () -> Unit,
+    onSubmitTaskUpdate: () -> Unit,
+    onDismissUpdateConfirmation: () -> Unit,
     onDeployAssignment: () -> Unit,
     onNavigateToDashboard: () -> Unit,
     onNavigateToAttendance: () -> Unit,
@@ -61,8 +70,11 @@ fun ProfessorTasksScreen(
     onLogoutClick: () -> Unit = {}
 ) {
     var showDeadlinePicker by remember { mutableStateOf(false) }
+    var showEditDeadlinePicker by remember { mutableStateOf(false) }
     var showClassTargetDropdown by remember { mutableStateOf(false) }
+    var showEditClassTargetDropdown by remember { mutableStateOf(false) }
     var showChecklistTaskDropdown by remember { mutableStateOf(false) }
+    var pendingDeleteTaskId by remember { mutableStateOf<String?>(null) }
     val todayUtcStartMillis = remember {
         Instant.now().atOffset(ZoneOffset.UTC).toLocalDate()
             .atStartOfDay()
@@ -74,6 +86,11 @@ fun ProfessorTasksScreen(
         uiState.deadlineDate.trim().isNotEmpty() &&
         uiState.category.trim().isNotEmpty() &&
         uiState.selectedClassTargetId != null
+    val isUpdateEnabled = uiState.editTitle.trim().isNotEmpty() &&
+        uiState.editDescription.trim().isNotEmpty() &&
+        uiState.editDeadlineDate.trim().isNotEmpty() &&
+        uiState.editCategory.trim().isNotEmpty() &&
+        uiState.editSelectedClassTargetId != null
 
     if (showDeadlinePicker) {
         val selectableDates = remember(todayUtcStartMillis) {
@@ -112,6 +129,215 @@ fun ProfessorTasksScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showEditDeadlinePicker) {
+        val selectableDates = remember(todayUtcStartMillis) {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis >= todayUtcStartMillis
+                }
+            }
+        }
+        val datePickerState = rememberDatePickerState(
+            selectableDates = selectableDates
+        )
+        val isSelectedDateValid = (datePickerState.selectedDateMillis ?: Long.MIN_VALUE) >= todayUtcStartMillis
+        DatePickerDialog(
+            onDismissRequest = { showEditDeadlinePicker = false },
+            confirmButton = {
+                TextButton(
+                    enabled = isSelectedDateValid,
+                    onClick = {
+                        datePickerState.selectedDateMillis
+                            ?.takeIf { it >= todayUtcStartMillis }
+                            ?.let { selectedMillis ->
+                                onEditDeadlineChange(formatProfessorTaskDate(selectedMillis))
+                            }
+                        showEditDeadlinePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDeadlinePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (uiState.isEditDialogVisible && uiState.editingTaskId != null) {
+        AlertDialog(
+            onDismissRequest = onCancelEditTask,
+            title = { Text("Update Task") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = uiState.editTitle,
+                        onValueChange = onEditTitleChange,
+                        label = { Text("Title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.editDescription,
+                        onValueChange = onEditDescriptionChange,
+                        label = { Text("Description") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                    )
+                    OutlinedTextField(
+                        value = uiState.editDeadlineDate,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Deadline") },
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            IconButton(onClick = { showEditDeadlinePicker = true }) {
+                                Icon(
+                                    Icons.Outlined.CalendarToday,
+                                    contentDescription = "Pick date",
+                                    tint = Color(0xFF64748B),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    )
+                    Box {
+                        OutlinedTextField(
+                            value = uiState.editCategory,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Category") },
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = onEditCategoryDropdownToggle) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = uiState.isEditCategoryDropdownExpanded,
+                            onDismissRequest = onEditCategoryDropdownHide,
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            uiState.categoryOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = { onEditCategorySelect(option) }
+                                )
+                            }
+                        }
+                    }
+                    Box {
+                        val selectedClassText = uiState.classTargets
+                            .firstOrNull { it.id == uiState.editSelectedClassTargetId }
+                            ?.name
+                            ?: "Select class"
+                        OutlinedTextField(
+                            value = selectedClassText,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Target Class") },
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { showEditClassTargetDropdown = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = showEditClassTargetDropdown,
+                            onDismissRequest = { showEditClassTargetDropdown = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            uiState.classTargets.forEach { classTarget ->
+                                DropdownMenuItem(
+                                    text = { Text(classTarget.name) },
+                                    onClick = {
+                                        onEditClassTargetSelected(classTarget.id)
+                                        showEditClassTargetDropdown = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    uiState.editStatusMessage?.takeIf { it.isNotBlank() }?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color(0xFF334155),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = isUpdateEnabled,
+                    onClick = {
+                        showEditClassTargetDropdown = false
+                        onSubmitTaskUpdate()
+                    }
+                ) {
+                    Text("Update")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showEditClassTargetDropdown = false
+                        onCancelEditTask()
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (uiState.showUpdateConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = onDismissUpdateConfirmation,
+            title = { Text("Update Confirmed") },
+            text = {
+                Text(uiState.updateConfirmationMessage ?: "Task updated successfully.")
+            },
+            confirmButton = {
+                TextButton(onClick = onDismissUpdateConfirmation) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (pendingDeleteTaskId != null) {
+        AlertDialog(
+            onDismissRequest = { pendingDeleteTaskId = null },
+            title = { Text("Delete Task") },
+            text = { Text("Delete this task for both professor and students?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val taskId = pendingDeleteTaskId
+                    pendingDeleteTaskId = null
+                    if (taskId != null) {
+                        onDeleteTask(taskId)
+                    }
+                }) {
+                    Text("Delete", color = Color(0xFFB91C1C), fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteTaskId = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -155,6 +381,30 @@ fun ProfessorTasksScreen(
                     label = { Text("SUMMARY", color = Color(0xFF94A3B8), fontWeight = FontWeight.Bold, fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFFF0F7FF))
                 )
+            }
+        },
+        snackbarHost = {
+            if (uiState.isUndoDeleteVisible && !uiState.pendingDeleteTaskTitle.isNullOrBlank()) {
+                Snackbar(
+                    action = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${uiState.undoSecondsRemaining}s",
+                                color = Color(0xFFDBEAFE),
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(onClick = onUndoDeleteTask) {
+                                Text("UNDO", color = Color(0xFF93C5FD), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    },
+                    containerColor = Color(0xFF1E293B),
+                    contentColor = Color.White
+                ) {
+                    Text("Task deleted: ${uiState.pendingDeleteTaskTitle}")
+                }
             }
         },
         containerColor = Color(0xFFF8FAFC)
@@ -437,7 +687,6 @@ fun ProfessorTasksScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                         }
 
-                        // Deploy Button
                         Button(
                             onClick = onDeployAssignment,
                             enabled = isDeployEnabled,
@@ -538,7 +787,18 @@ fun ProfessorTasksScreen(
                     indicatorColor = style.indicatorColor,
                     referencesCount = task.referencesCount,
                     isDraft = task.isDraft,
-                    draftHint = task.draftHint
+                    draftHint = task.draftHint,
+                    editedTimestampText = task.editedTimestampText,
+                    onEditTask = if (!task.isDraft) {
+                        { onEditTask(task.id) }
+                    } else {
+                        null
+                    },
+                    onDeleteTask = if (!task.isDraft) {
+                        { pendingDeleteTaskId = task.id }
+                    } else {
+                        null
+                    }
                 )
             }
 
@@ -657,7 +917,10 @@ fun TaskItemCard(
     indicatorColor: Color,
     referencesCount: Int = 0,
     isDraft: Boolean = false,
-    draftHint: String = ""
+    draftHint: String = "",
+    editedTimestampText: String? = null,
+    onEditTask: (() -> Unit)? = null,
+    onDeleteTask: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -696,6 +959,25 @@ fun TaskItemCard(
                         color = Color(0xFF64748B),
                         fontSize = 12.sp
                     )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (onEditTask != null) {
+                        IconButton(onClick = onEditTask, modifier = Modifier.size(22.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit task",
+                                tint = Color(0xFF1D4ED8)
+                            )
+                        }
+                    }
+                    if (onDeleteTask != null) {
+                        IconButton(onClick = onDeleteTask, modifier = Modifier.size(22.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete task",
+                                tint = Color(0xFFB91C1C)
+                            )
+                        }
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -752,7 +1034,31 @@ fun TaskItemCard(
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = Color(0xFFF1F5F9))
                 Spacer(modifier = Modifier.height(12.dp))
-                
+                editedTimestampText?.let { editedText ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = Color(0xFFE0E7FF),
+                            shape = RoundedCornerShape(999.dp)
+                        ) {
+                            Text(
+                                text = "Edited",
+                                color = Color(0xFF3730A3),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = editedText.removePrefix("Edited "),
+                            color = Color(0xFF6366F1),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 // Footer
                 Row(
                     modifier = Modifier.fillMaxWidth(),

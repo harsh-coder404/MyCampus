@@ -10,6 +10,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findByStudentId(Long studentId);
     List<Submission> findByTaskId(Long taskId);
     Optional<Submission> findByTaskIdAndStudentId(Long taskId, Long studentId);
+    void deleteByTaskId(Long taskId);
 }
 
 

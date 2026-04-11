@@ -21,6 +21,7 @@ D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\RegisterRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\StartAttendanceSessionRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\StartAttendanceSessionResponse.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\TaskRequest.java
+D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\TaskUpdateRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\dto\VerifyIdentityRequest.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\Attendance.java
 D:\MinorApp\backend\src\main\java\com\example\minorapp\model\AttendanceSession.java
