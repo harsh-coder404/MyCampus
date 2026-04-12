@@ -1,6 +1,6 @@
-package com.example.minorapp.presentation.screen.profile
-
+﻿package com.example.minorapp.presentation.screen.profile
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +40,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +48,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -127,13 +127,11 @@ fun ProfileScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
-
             Spacer(modifier = Modifier.height(24.dp))
-
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -162,7 +160,6 @@ fun ProfileScreen(
                                 )
                             }
                         }
-
                         if (selectedImageUri != null) {
                             Surface(
                                 shape = CircleShape,
@@ -181,7 +178,6 @@ fun ProfileScreen(
                                 )
                             }
                         }
-
                         Surface(
                             shape = CircleShape,
                             color = Color(0xFF0265DC),
@@ -199,9 +195,7 @@ fun ProfileScreen(
                             )
                         }
                     }
-
                     Spacer(modifier = Modifier.height(16.dp))
-
                     Text(
                         text = "Academic Profile",
                         fontWeight = FontWeight.Bold,
@@ -215,9 +209,7 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
-
                     Spacer(modifier = Modifier.height(24.dp))
-
                     EditableProfileField(
                         label = "USERNAME",
                         value = uiState.username,
@@ -227,9 +219,7 @@ fun ProfileScreen(
                     ProfileField(label = "BRANCH", value = uiState.branch)
                     Spacer(modifier = Modifier.height(16.dp))
                     ProfileField(label = uiState.identityLabel, value = uiState.identityValue)
-
                     Spacer(modifier = Modifier.height(24.dp))
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -251,38 +241,50 @@ fun ProfileScreen(
                             fontSize = 14.sp
                         )
                     }
-
                     Spacer(modifier = Modifier.height(16.dp))
-
                     Button(
                         onClick = onSaveChangesClick,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF0265DC),
+                            containerColor = Color.Transparent,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(),
+                        shape = RoundedCornerShape(24.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(56.dp)
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save Changes", fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color(0xFF0265DC), // Heavy Sky Blue
+                                            Color(0xFF38BDF8)  // Lighter Sky Blue
+                                        )
+                                    )
+                                ),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Save Changes", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    shape = RoundedCornerShape(8.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -302,12 +304,11 @@ fun ProfileScreen(
                         )
                     }
                 }
-
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    shape = RoundedCornerShape(8.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -328,12 +329,10 @@ fun ProfileScreen(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
-
 @Composable
 fun ProfileField(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -342,24 +341,24 @@ fun ProfileField(label: String, value: String) {
             color = Color(0xFF334155),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(start = 12.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Surface(
-            color = Color(0xFFE2E8F0),
-            shape = RoundedCornerShape(4.dp),
+            color = Color(0xFFF1F5F9),
+            shape = RoundedCornerShape(24.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = value,
                 color = Color(0xFF0F172A),
                 fontSize = 14.sp,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
             )
         }
     }
 }
-
 @Composable
 fun EditableProfileField(label: String, value: String, onValueChange: (String) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -368,12 +367,13 @@ fun EditableProfileField(label: String, value: String, onValueChange: (String) -
             color = Color(0xFF334155),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(start = 12.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Surface(
             color = Color(0xFFF1F5F9),
-            shape = RoundedCornerShape(4.dp),
+            shape = RoundedCornerShape(24.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             androidx.compose.foundation.text.BasicTextField(
@@ -385,7 +385,7 @@ fun EditableProfileField(label: String, value: String, onValueChange: (String) -
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
             )
         }
     }

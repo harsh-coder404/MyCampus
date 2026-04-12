@@ -9,6 +9,7 @@ import com.example.minorapp.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,21 +58,31 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Object> deleteTaskForAuthenticatedProfessor(@PathVariable("id") Long taskId, HttpServletRequest request) {
-        String email = extractAuthenticatedEmail(request);
-        taskService.deleteTaskForProfessor(taskId, email);
-        return new ApiResponse<>("SUCCESS", "Task deleted.", null);
+    public ResponseEntity<ApiResponse<Object>> deleteTaskForAuthenticatedProfessor(@PathVariable("id") Long taskId, HttpServletRequest request) {
+        try {
+            String email = extractAuthenticatedEmail(request);
+            taskService.deleteTaskForProfessor(taskId, email);
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Task deleted.", null));
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                .body(new ApiResponse<>("ERROR", ex.getReason(), null));
+        }
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Task> updateTaskForAuthenticatedProfessor(
+    public ResponseEntity<ApiResponse<Task>> updateTaskForAuthenticatedProfessor(
         @PathVariable("id") Long taskId,
         @Valid @RequestBody TaskUpdateRequest request,
         HttpServletRequest httpRequest
     ) {
-        String email = extractAuthenticatedEmail(httpRequest);
-        Task updated = taskService.updateTaskForProfessor(taskId, request, email);
-        return new ApiResponse<>("SUCCESS", "Task updated.", updated);
+        try {
+            String email = extractAuthenticatedEmail(httpRequest);
+            Task updated = taskService.updateTaskForProfessor(taskId, request, email);
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Task updated.", updated));
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                .body(new ApiResponse<>("ERROR", ex.getReason(), null));
+        }
     }
 
     private String extractAuthenticatedEmail(HttpServletRequest request) {
@@ -88,5 +99,3 @@ public class TaskController {
         return jwtUtil.extractEmail(token);
     }
 }
-
-
