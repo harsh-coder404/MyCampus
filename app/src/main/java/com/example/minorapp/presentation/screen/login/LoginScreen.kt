@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Help
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
@@ -30,7 +29,6 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
@@ -55,12 +53,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
 import com.example.minorapp.domain.model.UserRole
+import com.example.minorapp.presentation.common.AppBlueTheme
+import com.example.minorapp.presentation.common.BlueGradientButton as Button
+import com.example.minorapp.presentation.common.BlueGradientCard as Card
 import com.example.minorapp.ui.theme.AppTextStyles
 import com.example.minorapp.ui.theme.MinorAppTheme
 
@@ -76,12 +78,12 @@ fun LoginScreen(
     onLoginClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val background = Color(0xFFF2F4F8)
-    val cardBackground = Color(0xFFF8F9FB)
+    val background = AppBlueTheme.ScreenBackground
+    val cardBackground = Color.Transparent
     val primaryBlue = Color(0xFF0D5CAB)
-    val sectionLabel = Color(0xFF263143)
-    val inputBackground = Color(0xFFE6E8EC)
-    val mutedText = Color(0xFF6B7280)
+    val sectionLabel = Color.White
+    val inputBackground = Color(0xFFFDFEFF)
+    val mutedText = Color.Black
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -98,44 +100,38 @@ fun LoginScreen(
             .padding(horizontal = 22.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(cardBackground, RoundedCornerShape(18.dp))
-                .padding(horizontal = 20.dp, vertical = 26.dp)
+                .background(cardBackground, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 26.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFEAF2FF), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 10.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.MenuBook,
-                        contentDescription = "App icon",
-                        tint = primaryBlue
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "MyCampus",
-                    color = primaryBlue,
-                    style = AppTextStyles.sectionLabel,
-                    fontSize = 24.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Welcome Back",
-                style = AppTextStyles.screenTitle,
-                color = Color(0xFF111827),
+                style = AppTextStyles.screenTitle.copy(
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.ExtraBold
+                ),
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "MyCampus",
+                style = AppTextStyles.screenSubtitle.copy(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color.White,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
@@ -145,14 +141,14 @@ fun LoginScreen(
             Text(
                 text = "Access your academic dashboard to\nmanage attendance and tasks.",
                 style = AppTextStyles.screenSubtitle,
-                color = Color(0xFF374151),
+                color = Color.White,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            SectionLabel(text = "INSTITUTIONAL EMAIL", color = sectionLabel)
+            SectionLabel(text = "EMAIL", color = sectionLabel)
             Spacer(modifier = Modifier.height(10.dp))
             InputField(
                 value = uiState.email,
@@ -186,10 +182,10 @@ fun LoginScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                SectionLabel(text = "SECURITY KEY", color = sectionLabel)
+                SectionLabel(text = "PASSWORD", color = sectionLabel)
                 Text(
                     text = "FORGOT?",
-                    color = primaryBlue,
+                    color = Color.White,
                     style = AppTextStyles.sectionLabel,
                     letterSpacing = 0.8.sp,
                     modifier = Modifier.clickable(onClick = onForgotPasswordClick)
@@ -234,7 +230,8 @@ fun LoginScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.Outlined.School,
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = Color.Black
                         )
                     },
                     onClick = { onRoleSelected(UserRole.STUDENT) },
@@ -248,7 +245,8 @@ fun LoginScreen(
                     icon = {
                         Icon(
                             imageVector = Icons.Outlined.Badge,
-                            contentDescription = null
+                            contentDescription = null,
+                            tint = Color.Black
                         )
                     },
                     onClick = { onRoleSelected(UserRole.PROFESSOR) },
@@ -272,7 +270,7 @@ fun LoginScreen(
                 Text(
                     text = "Remember me for 30 days",
                     style = AppTextStyles.body,
-                    color = Color(0xFF2C3646)
+                    color = Color.White
                 )
             }
 
@@ -282,6 +280,7 @@ fun LoginScreen(
                 onClick = onLoginClick,
                 enabled = !uiState.isAuthenticating,
                 colors = ButtonDefaults.buttonColors(containerColor = primaryBlue),
+                isNeutral = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
@@ -326,16 +325,17 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "New here? ",
-                    color = Color(0xFF1F2937),
+                    color = Color.White,
                     style = AppTextStyles.smallLink.copy(fontWeight = FontWeight.Normal)
                 )
                 Text(
                     text = "Register your account",
-                    color = primaryBlue,
+                    color = Color.White,
                     style = AppTextStyles.smallLink,
                     modifier = Modifier.clickable(onClick = onRequestAccessClick)
                 )
             }
+        }
         }
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -476,8 +476,8 @@ private fun InputField(
             unfocusedTextColor = Color(0xFF111827),
             disabledTextColor = Color(0xFF6B7280),
             cursorColor = Color(0xFF0D5CAB),
-            focusedBorderColor = Color.Transparent,
-            unfocusedBorderColor = Color.Transparent
+            focusedBorderColor = Color(0xFF0D5CAB),
+            unfocusedBorderColor = Color(0xFF97AEC8)
         ),
         shape = RoundedCornerShape(14.dp)
     )
@@ -505,12 +505,38 @@ private fun FooterInfoLine(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(name = "Login - Default", showBackground = true)
 @Composable
-private fun LoginScreenPreview() {
+private fun LoginScreenPreviewDefault() {
     MinorAppTheme {
         LoginScreen(
             uiState = LoginUiState(),
+            onRoleSelected = {},
+            onEmailChanged = {},
+            onPasswordChanged = {},
+            onRememberFor30DaysChanged = {},
+            onForgotPasswordClick = {},
+            onRequestAccessClick = {},
+            onLoginClick = {}
+        )
+    }
+}
+
+@Preview(
+    name = "Login - Filled",
+    showBackground = true,
+    device = Devices.PIXEL_4
+)
+@Composable
+private fun LoginScreenPreviewFilled() {
+    MinorAppTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                selectedRole = UserRole.PROFESSOR,
+                email = "professor@mycampus.edu",
+                password = "password123",
+                rememberFor30Days = true
+            ),
             onRoleSelected = {},
             onEmailChanged = {},
             onPasswordChanged = {},

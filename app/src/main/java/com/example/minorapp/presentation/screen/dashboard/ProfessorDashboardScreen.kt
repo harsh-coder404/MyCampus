@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.domain.model.ProfessorAssignmentData
 import com.example.minorapp.domain.model.ProfessorSessionData
+import com.example.minorapp.presentation.common.AppBlueTheme
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,7 +139,7 @@ fun ProfessorDashboardScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier

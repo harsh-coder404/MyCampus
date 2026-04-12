@@ -2,6 +2,7 @@ package com.example.minorapp.presentation.screen.splash
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,12 +23,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.minorapp.presentation.common.AppBlueTheme
+import com.example.minorapp.presentation.common.BlueGradientCard as Card
 import com.example.minorapp.ui.theme.AppTextStyles
 import com.example.minorapp.ui.theme.MinorAppTheme
 
 @Composable
 fun SplashScreen() {
-    val backgroundColor = Color(0xFFF4F6FA)
+    val backgroundColor = AppBlueTheme.ScreenBackground
     val primaryBlue = Color(0xFF0D5CAB)
     val secondaryText = Color(0xFF5F6E85)
     val trackColor = Color(0xFFD9DEE8)
@@ -133,8 +135,11 @@ private fun LogoPlaceholder(primaryBlue: Color) {
         contentAlignment = Alignment.Center
     ) {
         Card(
+            modifier = Modifier.border(
+                BorderStroke(1.dp, primaryBlue.copy(alpha = 0.35f)),
+                shape = RoundedCornerShape(12.dp)
+            ),
             shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(1.dp, primaryBlue.copy(alpha = 0.35f))
         ) {
             Box(
                 modifier = Modifier
@@ -144,7 +149,7 @@ private fun LogoPlaceholder(primaryBlue: Color) {
             ) {
                 Text(
                     text = "APP LOGO",
-                    color = primaryBlue.copy(alpha = 0.9f),
+                    color = Color.White,
                     style = AppTextStyles.logoPlaceholder
                 )
             }

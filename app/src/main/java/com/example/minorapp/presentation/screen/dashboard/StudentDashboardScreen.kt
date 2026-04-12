@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.core.net.toUri
+import com.example.minorapp.presentation.common.AppBlueTheme
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +100,7 @@ fun StudentDashboardScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -135,7 +136,7 @@ fun StudentDashboardScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Row(
@@ -222,6 +223,7 @@ fun StudentDashboardScreen(
                             containerColor = Color(0xFF3B82F6),
                             contentColor = Color.White
                         ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text("View Attendance", fontWeight = FontWeight.Bold, color = Color.White)
@@ -235,7 +237,7 @@ fun StudentDashboardScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -312,7 +314,7 @@ fun StudentDashboardScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1D70B8)),
                 shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -391,7 +393,7 @@ fun LectureCard(
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(

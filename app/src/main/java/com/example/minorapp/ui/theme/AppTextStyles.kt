@@ -51,6 +51,19 @@ object AppTextStyles {
         fontWeight = FontWeight.SemiBold
     )
 
+    val majorCardHeader = TextStyle(
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 1.sp,
+        fontWeight = FontWeight.Bold
+    )
+
+    val sectionHeading = TextStyle(
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+        fontWeight = FontWeight.Bold
+    )
+
     val fieldText = TextStyle(
         fontSize = 14.sp,
         lineHeight = 20.sp,
@@ -72,6 +85,12 @@ object AppTextStyles {
     val primaryButton = TextStyle(
         fontSize = 17.sp,
         lineHeight = 22.sp,
+        fontWeight = FontWeight.SemiBold
+    )
+
+    val majorButtonLabel = TextStyle(
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
         fontWeight = FontWeight.SemiBold
     )
 

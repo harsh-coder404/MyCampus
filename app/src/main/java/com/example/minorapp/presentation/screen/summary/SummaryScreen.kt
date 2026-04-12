@@ -32,6 +32,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.minorapp.domain.constants.DummyDataConstants
+import com.example.minorapp.presentation.common.AppBlueTheme
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,7 +89,7 @@ fun SummaryScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -139,7 +140,7 @@ fun SummaryScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(24.dp),
@@ -222,7 +223,7 @@ fun SummaryScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Text(
@@ -309,7 +310,7 @@ fun SummaryScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row {
@@ -332,7 +333,7 @@ fun SummaryScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row {
@@ -360,7 +361,7 @@ fun SummaryScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row {
@@ -383,7 +384,7 @@ fun SummaryScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row {
@@ -531,7 +532,7 @@ fun SummaryScreen(
                         Card(
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -583,7 +584,7 @@ fun SummaryScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1D70B8)),
                 shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {

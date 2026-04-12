@@ -36,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import com.example.minorapp.data.tasks.TaskStatus
 import com.example.minorapp.domain.constants.DummyDataConstants
+import com.example.minorapp.presentation.common.AppBlueTheme
 import com.example.minorapp.presentation.common.MyCampusTopBar
 import java.time.Instant
 import java.time.LocalDate
@@ -533,12 +534,13 @@ fun TasksScreen(
                 onClick = { showCreateTaskDialog = true },
                 containerColor = Color(0xFF0265DC),
                 contentColor = Color.White,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Task")
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -576,7 +578,7 @@ fun TasksScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -685,7 +687,7 @@ fun TasksScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF0265DC)),
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
@@ -950,7 +952,7 @@ fun TaskCard(
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
             .let { baseModifier ->

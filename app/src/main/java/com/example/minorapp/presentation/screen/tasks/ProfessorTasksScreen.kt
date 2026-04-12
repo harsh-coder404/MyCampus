@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.outlined.BackHand
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CalendarToday
@@ -31,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.minorapp.data.tasks.ProfessorTaskPriority
 import com.example.minorapp.domain.constants.DummyDataConstants
+import com.example.minorapp.presentation.common.AppBlueTheme
+import com.example.minorapp.presentation.common.BlueGradientButton as Button
+import com.example.minorapp.presentation.common.BlueGradientCard as Card
 import com.example.minorapp.presentation.common.MyCampusTopBar
 import java.time.Instant
 import java.time.ZoneOffset
@@ -407,7 +411,7 @@ fun ProfessorTasksScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -441,6 +445,7 @@ fun ProfessorTasksScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+                    gradientColors = listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -698,7 +703,7 @@ fun ProfessorTasksScreen(
                                 containerColor = Color(0xFF1D4ED8),
                                 disabledContainerColor = Color(0xFF93C5FD),
                                 contentColor = Color.White,
-                                disabledContentColor = Color.White.copy(alpha = 0.9f)
+                                disabledContentColor = Color.White
                             )
                         ) {
                             Icon(Icons.Rounded.RocketLaunch, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -707,6 +712,16 @@ fun ProfessorTasksScreen(
                         }
                     }
                 }
+            }
+
+            item {
+                Text(
+                    text = "ACTIVE PIPELINE",
+                    color = Color(0xFF334155),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    letterSpacing = 1.sp
+                )
             }
 
             // Active Pipeline Card
@@ -719,14 +734,6 @@ fun ProfessorTasksScreen(
                     Box(modifier = Modifier.padding(20.dp)) {
                         Column {
                             Text(
-                                text = "ACTIVE PIPELINE",
-                                color = Color(0xFF93C5FD),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                                letterSpacing = 1.sp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
                                 text = "${uiState.activeTasksCount} Tasks",
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
@@ -735,7 +742,7 @@ fun ProfessorTasksScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Across ${uiState.departmentsCount} departments",
-                                color = Color(0xFFDBEAFE),
+                                color = Color.White,
                                 fontSize = 14.sp
                             )
                         }
@@ -743,7 +750,7 @@ fun ProfessorTasksScreen(
                         Icon(
                             imageVector = Icons.Rounded.AutoAwesome,
                             contentDescription = null,
-                            tint = Color(0xFF3B82F6).copy(alpha = 0.5f),
+                            tint = Color.White,
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
                                 .size(64.dp)
@@ -769,7 +776,7 @@ fun ProfessorTasksScreen(
                     Row {
                         Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = Color(0xFF64748B), modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Icon(Icons.Default.Sort, contentDescription = "Sort", tint = Color(0xFF64748B), modifier = Modifier.size(24.dp))
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort", tint = Color(0xFF64748B), modifier = Modifier.size(24.dp))
                     }
                 }
             }
@@ -804,7 +811,7 @@ fun ProfessorTasksScreen(
 
             if (uiState.activeInventory.isNotEmpty()) {
                 item {
-                    Card(
+                    androidx.compose.material3.Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(12.dp),
@@ -922,7 +929,7 @@ fun TaskItemCard(
     onEditTask: (() -> Unit)? = null,
     onDeleteTask: (() -> Unit)? = null
 ) {
-    Card(
+    androidx.compose.material3.Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = if (isDraft) Color(0xFFF8FAFC) else Color.White),
         shape = RoundedCornerShape(12.dp),

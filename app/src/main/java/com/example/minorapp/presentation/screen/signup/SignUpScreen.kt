@@ -28,7 +28,6 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.minorapp.domain.model.UserRole
+import com.example.minorapp.presentation.common.BlueGradientButton as Button
 import com.example.minorapp.ui.theme.AppTextStyles
 import com.example.minorapp.ui.theme.MinorAppTheme
 
@@ -228,6 +228,7 @@ fun SignUpScreen(
                 onClick = onCreateAccountClick,
                 enabled = !isRegistering,
                 colors = ButtonDefaults.buttonColors(containerColor = primaryBlue),
+                isNeutral = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),

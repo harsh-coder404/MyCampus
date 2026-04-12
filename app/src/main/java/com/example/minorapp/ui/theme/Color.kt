@@ -2,10 +2,16 @@ package com.example.minorapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val SkyBlue80 = Color(0xFFBFDFFF)
+val SkyBlueGrey80 = Color(0xFFD5E6FA)
+val CyanBlue80 = Color(0xFFAEDCFF)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val SkyBlue40 = Color(0xFF1F78DD)
+val SkyBlueGrey40 = Color(0xFF3B82C4)
+val CyanBlue40 = Color(0xFF56AEEF)
+
+val AppBlueBackground = Color(0xFFEAF4FF)
+val AppBlueSurface = Color(0xFFF4F9FF)
+val AppBlueSurfaceVariant = Color(0xFFD9EAFB)
+val AppOnBackground = Color(0xFF0F172A)
+val AppOnPrimary = Color(0xFFFFFFFF)

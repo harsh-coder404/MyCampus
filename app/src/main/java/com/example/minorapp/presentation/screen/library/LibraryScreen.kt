@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -48,7 +47,10 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.foundation.layout.IntrinsicSize
 import com.example.minorapp.domain.constants.DummyDataConstants
+import com.example.minorapp.presentation.common.AppBlueTheme
+import com.example.minorapp.presentation.common.BlueGradientCard as Card
 import com.example.minorapp.presentation.common.MyCampusTopBar
+import com.example.minorapp.ui.theme.AppTextStyles
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +81,7 @@ fun LibraryScreen(
                 Icon(Icons.Outlined.ShoppingCart, contentDescription = "Cart")
             }
         },
-        containerColor = Color(0xFFF1F5F9)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -91,8 +93,8 @@ fun LibraryScreen(
         ) {
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Currently Issued", fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Color(0xFF0F172A))
-                    Text("${uiState.activeLoansCount} ACTIVE LOANS", fontSize = 11.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+                    Text("Currently Issued", style = AppTextStyles.sectionHeading, color = Color(0xFF0F172A))
+                    Text("${uiState.activeLoansCount} ACTIVE LOANS", style = AppTextStyles.majorCardHeader, color = Color(0xFF64748B))
                 }
             }
 
@@ -101,7 +103,7 @@ fun LibraryScreen(
             }
 
             item {
-                Text("Available in Library", fontWeight = FontWeight.Bold, fontSize = 21.sp, color = Color(0xFF0F172A))
+                Text("Available in Library", style = AppTextStyles.sectionHeading, color = Color(0xFF0F172A))
             }
 
             item {
@@ -183,15 +185,14 @@ private fun IssuedBookCard(book: IssuedBookUi) {
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(book.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), lineHeight = 22.sp)
+                    Text(book.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 22.sp)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(book.author, fontSize = 14.sp, color = Color(0xFF475569))
+                    Text(book.author, fontSize = 14.sp, color = Color.White)
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = if (book.isOverdue) "OVERDUE" else "DUE DATE",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF94A3B8),
+                        style = AppTextStyles.majorCardHeader,
+                        color = Color.White,
                         letterSpacing = 1.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -199,13 +200,13 @@ private fun IssuedBookCard(book: IssuedBookUi) {
                         Icon(
                             imageVector = if (book.isOverdue) Icons.Default.Warning else Icons.Default.DateRange,
                             contentDescription = null,
-                            tint = if (book.isOverdue) Color(0xFFDC2626) else Color(0xFFB45309),
+                            tint = Color.White,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = book.dueDateText,
-                            color = if (book.isOverdue) Color(0xFFDC2626) else Color(0xFFB45309),
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )

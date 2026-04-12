@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.minorapp.domain.constants.DummyDataConstants
+import com.example.minorapp.presentation.common.AppBlueTheme
 import com.example.minorapp.presentation.common.MyCampusTopBar
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -121,7 +122,7 @@ fun AttendanceScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -147,7 +148,9 @@ fun AttendanceScreen(
                 },
                 enabled = !uiState.isMarkingQrAttendance,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB), contentColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
             ) {
                 Text(
                     text = if (uiState.isMarkingQrAttendance) "Verifying..." else "Scan QR",
@@ -171,7 +174,7 @@ fun AttendanceScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF0265DC)),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
@@ -298,7 +301,7 @@ fun AttendanceScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
                 shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -381,7 +384,7 @@ private fun OverallPresenceCard(uiState: AttendanceUiState) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
@@ -447,7 +450,7 @@ private fun RowScope.SummaryStatCard(stat: AttendanceSummaryStatUi) {
     Card(
         colors = CardDefaults.cardColors(containerColor = stat.containerColor),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.weight(1f)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -473,7 +476,7 @@ fun SubjectCard(
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
     ) {
         Row(

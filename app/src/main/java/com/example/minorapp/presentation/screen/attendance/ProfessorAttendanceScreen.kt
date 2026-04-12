@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -34,14 +36,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -64,6 +61,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.minorapp.presentation.common.AppBlueTheme
+import com.example.minorapp.presentation.common.BlueGradientButton as Button
 import com.example.minorapp.presentation.common.MyCampusTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -135,7 +134,7 @@ fun ProfessorAttendanceScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = AppBlueTheme.ScreenBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -321,7 +320,6 @@ private fun AttendanceHistoryDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QrAttendanceControlCard(
     uiState: ProfessorAttendanceUiState,
@@ -329,46 +327,48 @@ private fun QrAttendanceControlCard(
     onCourseSelected: (Long) -> Unit,
     onStartQrAttendance: () -> Unit
 ) {
-    var modeExpanded by remember { mutableStateOf(false) }
-    var courseExpanded by remember { mutableStateOf(false) }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("SESSION CONFIGURATION", color = Color(0xFF0F172A), fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text("ATTENDANCE MODE", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 14.sp)
 
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Attendance Mode", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A))
-
-            ExposedDropdownMenuBox(expanded = modeExpanded, onExpandedChange = { modeExpanded = !modeExpanded }) {
-                OutlinedTextField(
-                    value = if (uiState.attendanceMode == ProfessorAttendanceMode.QR_CODE) "QR Code" else "Manual",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modeExpanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SessionPill(
+                    text = "Manual",
+                    selected = uiState.attendanceMode == ProfessorAttendanceMode.MANUAL,
+                    icon = Icons.Outlined.Edit,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onModeSelected(ProfessorAttendanceMode.MANUAL) }
                 )
-                DropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }) {
-                    DropdownMenuItem(text = { Text("Manual") }, onClick = { onModeSelected(ProfessorAttendanceMode.MANUAL); modeExpanded = false })
-                    DropdownMenuItem(text = { Text("QR Code") }, onClick = { onModeSelected(ProfessorAttendanceMode.QR_CODE); modeExpanded = false })
-                }
+                SessionPill(
+                    text = "QR Code",
+                    selected = uiState.attendanceMode == ProfessorAttendanceMode.QR_CODE,
+                    icon = Icons.Outlined.AccessTime,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onModeSelected(ProfessorAttendanceMode.QR_CODE) }
+                )
             }
 
-            ExposedDropdownMenuBox(expanded = courseExpanded, onExpandedChange = { courseExpanded = !courseExpanded }) {
-                val selectedCourse = uiState.availableCourses.firstOrNull { it.id == uiState.selectedCourseId }
-                OutlinedTextField(
-                    value = selectedCourse?.let { "${it.name} (${it.enrolledCount})" } ?: "Select Class",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseExpanded) },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
-                )
-                DropdownMenu(expanded = courseExpanded, onDismissRequest = { courseExpanded = false }) {
-                    uiState.availableCourses.forEach { course ->
-                        DropdownMenuItem(
-                            text = { Text("${course.name} (${course.enrolledCount})") },
-                            onClick = {
-                                onCourseSelected(course.id)
-                                courseExpanded = false
-                            }
-                        )
-                    }
+            Text("SELECT CLASS/GROUP", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 14.sp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                uiState.availableCourses.forEach { course ->
+                    SessionPill(
+                        text = course.name,
+                        selected = course.id == uiState.selectedCourseId,
+                        icon = Icons.Default.Person,
+                        modifier = Modifier.width(148.dp),
+                        onClick = { onCourseSelected(course.id) }
+                    )
                 }
             }
 
@@ -377,6 +377,7 @@ private fun QrAttendanceControlCard(
                     onClick = onStartQrAttendance,
                     enabled = !uiState.isStartingQr && uiState.selectedCourseId > 0,
                     modifier = Modifier.fillMaxWidth(),
+                    isNeutral = true,
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
                 ) {
                     Text(if (uiState.isStartingQr) "Starting..." else "Start Attendance", color = Color.White)
@@ -406,6 +407,38 @@ private fun QrAttendanceControlCard(
                     Text(uiState.qrError, color = Color(0xFFB42318), fontSize = 12.sp)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SessionPill(
+    text: String,
+    selected: Boolean,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val container = if (selected) Color(0xFF60A5FA) else Color(0xFFF8FCFF)
+    val content = if (selected) Color.White else Color(0xFF1D4ED8)
+
+    Surface(
+        modifier = modifier
+            .height(56.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = container,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF93C5FD)),
+        shadowElevation = if (selected) 4.dp else 1.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = text, color = content, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
@@ -476,23 +509,41 @@ fun StudentAttendanceItem(student: ProfessorStudentStatus, onStatusSelected: (At
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(modifier = Modifier.size(48.dp), shape = CircleShape, color = Color(0xFFE2E8F0)) {
-                Icon(imageVector = Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(12.dp), tint = Color(0xFF64748B))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(modifier = Modifier.size(48.dp), shape = CircleShape, color = Color(0xFFE2E8F0)) {
+                    Icon(imageVector = Icons.Default.Person, contentDescription = null, modifier = Modifier.padding(12.dp), tint = Color(0xFF64748B))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = student.name,
+                        color = Color(0xFF0F172A),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = student.details,
+                        color = Color(0xFF64748B),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = student.name, color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(text = student.details, color = Color(0xFF64748B), fontSize = 12.sp, lineHeight = 16.sp)
-            }
-        }
 
-        Row(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-            AttendanceSegmentButton("PRESENT", student.status == AttendanceStatus.PRESENT, Color(0xFF1D4ED8), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.PRESENT) }
-            Spacer(modifier = Modifier.width(8.dp))
-            AttendanceSegmentButton("ABSENT", student.status == AttendanceStatus.ABSENT, Color(0xFFB91C1C), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.ABSENT) }
-            Spacer(modifier = Modifier.width(8.dp))
-            AttendanceSegmentButton("LATE", student.status == AttendanceStatus.LATE, Color(0xFF92400E), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.LATE) }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                AttendanceSegmentButton("PRESENT", student.status == AttendanceStatus.PRESENT, Color(0xFF60A5FA), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.PRESENT) }
+                Spacer(modifier = Modifier.width(8.dp))
+                AttendanceSegmentButton("ABSENT", student.status == AttendanceStatus.ABSENT, Color(0xFFB91C1C), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.ABSENT) }
+                Spacer(modifier = Modifier.width(8.dp))
+                AttendanceSegmentButton("LATE", student.status == AttendanceStatus.LATE, Color(0xFF92400E), Modifier.weight(1f)) { onStatusSelected(AttendanceStatus.LATE) }
+            }
         }
     }
 }
