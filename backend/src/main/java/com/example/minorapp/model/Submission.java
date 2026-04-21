@@ -28,6 +28,8 @@ public class Submission {
 
     private String status;
 
+    private String submissionRef;
+
     private LocalDate submissionDate;
 
     public Long getId() {
@@ -68,6 +70,14 @@ public class Submission {
 
     public void setSubmissionDate(LocalDate submissionDate) {
         this.submissionDate = submissionDate;
+    }
+
+    public String getSubmissionRef() {
+        return submissionRef;
+    }
+
+    public void setSubmissionRef(String submissionRef) {
+        this.submissionRef = submissionRef;
     }
 }
 

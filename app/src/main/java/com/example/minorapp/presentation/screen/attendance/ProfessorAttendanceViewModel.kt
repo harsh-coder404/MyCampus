@@ -59,13 +59,13 @@ data class AttendanceHistoryEntryUi(
 
 data class ProfessorAttendanceUiState(
     val profileImageUri: String? = null,
-    val courseCode: String = "CS502",
-    val titleSubtitle: String = "Advanced Distributed Systems • Lecture Hall B-12",
-    val subjectName: String = "Engineering Mathematics",
-    val subjectCode: String = "CS-052",
-    val sessionDate: String = "Monday, Oct 24",
-    val sessionTime: String = "09:00 AM — 10:30 AM",
-    val totalEnrolled: Int = 42,
+    val courseCode: String = "",
+    val titleSubtitle: String = "",
+    val subjectName: String = "",
+    val subjectCode: String = "",
+    val sessionDate: String = "20/04/2026",
+    val sessionTime: String = "09:00 AM - 10:00 AM",
+    val totalEnrolled: Int = 0,
     val markedPresent: Int = 0,
     val completionPercent: Int = 0,
     val basePresentCount: Int = 0,
@@ -90,6 +90,8 @@ class ProfessorAttendanceViewModel(
 ) : ViewModel() {
 
     private var qrCountdownJob: Job? = null
+    private var rosterLoadJob: Job? = null
+    private var rosterRequestToken: Long = 0L
 
     var uiState by mutableStateOf(
         ProfessorAttendanceUiState(profileImageUri = sessionManager.getProfileImageUri())
@@ -147,7 +149,7 @@ class ProfessorAttendanceViewModel(
     }
 
     fun onCourseSelected(courseId: Long) {
-        uiState = uiState.copy(selectedCourseId = courseId)
+        uiState = uiState.copy(selectedCourseId = courseId, qrError = null)
         loadRosterForCourse(courseId)
     }
 
@@ -288,7 +290,7 @@ class ProfessorAttendanceViewModel(
                 details = item.details,
                 status = if (item.status.equals("PRESENT", ignoreCase = true)) AttendanceStatus.PRESENT else AttendanceStatus.ABSENT
             )
-        }
+        }.distinctBy { it.studentId }
 
         uiState = uiState.copy(
             students = finalized,
@@ -308,7 +310,10 @@ class ProfessorAttendanceViewModel(
     private fun loadRosterForCourse(courseId: Long) {
         if (courseId <= 0L) return
 
-        viewModelScope.launch {
+        rosterLoadJob?.cancel()
+        val requestToken = ++rosterRequestToken
+
+        rosterLoadJob = viewModelScope.launch {
             val token = sessionManager.getAccessToken()
             val snapshotResult = repository.fetchAttendanceSnapshot(token, courseId)
             val snapshot = snapshotResult.getOrNull()
@@ -319,6 +324,10 @@ class ProfessorAttendanceViewModel(
                     return@launch
                 }
                 uiState = uiState.copy(qrError = message)
+                return@launch
+            }
+
+            if (requestToken != rosterRequestToken || uiState.selectedCourseId != courseId) {
                 return@launch
             }
 
@@ -446,6 +455,7 @@ class ProfessorAttendanceViewModel(
     }
 
     override fun onCleared() {
+        rosterLoadJob?.cancel()
         qrCountdownJob?.cancel()
         super.onCleared()
     }
@@ -471,26 +481,28 @@ class ProfessorAttendanceViewModel(
 }
 
 private fun ProfessorAttendanceSnapshot.toUiState(profileImageUri: String?): ProfessorAttendanceUiState {
-    val resolvedSubjectName = "Engineering Mathematics"
-    val resolvedSubjectCode = subjectCode.trim().ifBlank { "CS - 052" }
+    val resolvedSubjectName = subjectName.trim().ifBlank { courseCode }
+    val resolvedSubjectCode = subjectCode.trim()
+    val resolvedSubtitle = titleSubtitle.trim().ifBlank { courseCode }
+    val uniqueStudents = students.distinctBy { it.studentId }
 
     return ProfessorAttendanceUiState(
         profileImageUri = profileImageUri,
         courseCode = courseCode,
-        titleSubtitle = titleSubtitle,
+        titleSubtitle = resolvedSubtitle,
         subjectName = resolvedSubjectName,
         subjectCode = resolvedSubjectCode,
         sessionDate = sessionDate,
         sessionTime = sessionTime,
-        totalEnrolled = totalEnrolled,
+        totalEnrolled = uniqueStudents.size,
         basePresentCount = basePresentCount,
         baseMarkedCount = baseMarkedCount,
-        students = students.mapIndexed { index, student ->
+        students = uniqueStudents.map { student ->
             ProfessorStudentStatus(
                 studentId = student.studentId,
                 name = student.name,
                 details = student.details,
-                status = if (index == 0) AttendanceStatus.PRESENT else AttendanceStatus.NONE
+                status = AttendanceStatus.NONE
             )
         }
     )

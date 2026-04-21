@@ -21,9 +21,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class TaskService {
@@ -171,7 +173,7 @@ public class TaskService {
         return professorCourseIds.contains(taskCourse.getId());
     }
 
-    public Submission submit(Long taskId, Long studentId, String status) {
+    public Submission submit(Long taskId, Long studentId, String status, String submissionRef) {
         Task task = taskRepository.findById(taskId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found."));
         User student = userRepository.findById(studentId)
@@ -181,14 +183,15 @@ public class TaskService {
         submission.setTask(task);
         submission.setStudent(student);
         submission.setStatus(status.toUpperCase());
+        submission.setSubmissionRef(submissionRef);
         submission.setSubmissionDate(LocalDate.now());
         return submissionRepository.save(submission);
     }
 
-    public Submission submitForAuthenticatedStudent(Long taskId, String status, String studentEmail) {
+    public Submission submitForAuthenticatedStudent(Long taskId, String status, String studentEmail, String submissionRef) {
         User student = userRepository.findByEmail(studentEmail.toLowerCase())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Student not found."));
-        return submit(taskId, student.getId(), status);
+        return submit(taskId, student.getId(), status, submissionRef);
     }
 
     public List<Submission> getSubmissionsByStudent(Long studentId) {
@@ -215,8 +218,13 @@ public class TaskService {
             }
         }
 
+        Set<Long> seenStudentIds = new HashSet<>();
+
         return enrollments.stream().map(enrollment -> {
             User student = enrollment.getStudent();
+            if (student == null || student.getId() == null || !seenStudentIds.add(student.getId())) {
+                return null;
+            }
             Submission submission = student == null ? null : submissionByStudentId.get(student.getId());
 
             Map<String, Object> row = new HashMap<>();
@@ -227,8 +235,9 @@ public class TaskService {
             row.put("submitted", submission != null);
             row.put("status", submission != null ? submission.getStatus() : "PENDING");
             row.put("submissionDate", submission != null ? submission.getSubmissionDate() : null);
+            row.put("submissionRef", submission != null ? submission.getSubmissionRef() : null);
             return row;
-        }).toList();
+        }).filter(row -> row != null).toList();
     }
 }
 

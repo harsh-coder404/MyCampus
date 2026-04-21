@@ -301,7 +301,13 @@ class TasksViewModel(
         )
 
         viewModelScope.launch {
-            when (val result = repository.submitTask(sessionManager.getAccessToken(), activeTaskId)) {
+            when (
+                val result = repository.submitTask(
+                    accessToken = sessionManager.getAccessToken(),
+                    taskId = activeTaskId,
+                    submissionRef = extractPdfName(pdfUri)
+                )
+            ) {
                 is TaskSubmissionSyncResult.Success -> Unit
                 is TaskSubmissionSyncResult.Failure -> {
                     if (isUnauthorizedError(result.message)) {

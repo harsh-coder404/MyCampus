@@ -43,7 +43,7 @@ interface TasksRepository {
         return RemoteTasksSyncResult.Failure("Remote sync not supported.")
     }
 
-    suspend fun submitTask(accessToken: String?, taskId: String): TaskSubmissionSyncResult {
+    suspend fun submitTask(accessToken: String?, taskId: String, submissionRef: String?): TaskSubmissionSyncResult {
         return TaskSubmissionSyncResult.Failure("Submission sync not supported.")
     }
 }
@@ -95,7 +95,7 @@ class BackendTasksRepository(
         }
     }
 
-    override suspend fun submitTask(accessToken: String?, taskId: String): TaskSubmissionSyncResult = withContext(Dispatchers.IO) {
+    override suspend fun submitTask(accessToken: String?, taskId: String, submissionRef: String?): TaskSubmissionSyncResult = withContext(Dispatchers.IO) {
         if (accessToken.isNullOrBlank()) {
             return@withContext TaskSubmissionSyncResult.Failure("Missing access token.")
         }
@@ -120,6 +120,7 @@ class BackendTasksRepository(
             val payload = JSONObject()
                 .put("taskId", taskIdLong)
                 .put("status", "SUBMITTED")
+                .put("submissionRef", submissionRef ?: "")
                 .toString()
 
             connection.outputStream.use {

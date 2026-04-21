@@ -25,8 +25,8 @@ fun ProfessorTasksRoute(
         factory = ProfessorTasksViewModel.factory(sessionManager)
     )
 
-    LaunchedEffect(viewModel.uiState.shouldForceReauth) {
-        if (viewModel.uiState.shouldForceReauth) {
+    LaunchedEffect(viewModel.uiState.shouldForceReAuth) {
+        if (viewModel.uiState.shouldForceReAuth) {
             viewModel.onForceReauthHandled()
             onLogoutClick()
         }

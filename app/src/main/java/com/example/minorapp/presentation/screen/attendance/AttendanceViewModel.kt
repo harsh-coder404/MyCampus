@@ -151,7 +151,9 @@ class AttendanceViewModel(
             val metrics = SharedAcademicMetricsResolver.fromSession(sessionManager)
             uiState = uiState.copy(
                 overallPresenceRatio = metrics.attendanceProgress,
-                overallPresenceText = "${metrics.attendancePercent}%"
+                overallPresenceText = "${metrics.attendancePercent}%",
+                overallPresenceTargetText = "TARGET: 75%",
+                priorityFocusDescription = buildPriorityFocusDescription(metrics.attendancePercent)
             )
         }
     }
@@ -267,9 +269,20 @@ private fun initialAttendanceUiState(sessionManager: SessionManager): Attendance
         profileImageUri = sessionManager.getProfileImageUri(),
         overallPresenceRatio = metrics.attendanceProgress,
         overallPresenceText = "${metrics.attendancePercent}%",
+        overallPresenceTargetText = "TARGET: 75%",
+        priorityFocusDescription = buildPriorityFocusDescription(metrics.attendancePercent),
         monthlySummaryStats = cachedMonthly ?: defaults.monthlySummaryStats,
         semesterSummaryStats = cachedSemester ?: defaults.semesterSummaryStats
     )
+}
+
+private fun buildPriorityFocusDescription(
+    currentAttendancePercent: Int,
+    targetAttendancePercent: Int = 75
+): String {
+    val delta = targetAttendancePercent - currentAttendancePercent
+    return "${DummyDataConstants.dummySubjects[1]} requires immediate attention. " +
+        "Your attendance is currently ${currentAttendancePercent}%, which is ${delta}% below the minimum target."
 }
 
 private fun List<AttendanceInsightStatData>.toSummaryStatUi(): List<AttendanceSummaryStatUi> {
@@ -326,11 +339,11 @@ private fun defaultAttendanceUiState(): AttendanceUiState {
         overallPresenceRatio = 0.884f,
         overallPresenceText = "88.4%",
         monthlyDeltaText = "+2.4% from last month",
-        overallPresenceTargetText = "TARGET: 85%",
+        overallPresenceTargetText = "TARGET: 75%",
         academicStandingDescription = "Your attendance has increased by 2.4% since last month. Keep it up to reach the Honors threshold.",
         primaryStandingBadge = "HONORS ELIGIBLE",
         secondaryStandingBadge = "TOP 15% OF COHORT",
-        priorityFocusDescription = "${DummyDataConstants.dummySubjects[1]} requires immediate attention. Your attendance is currently 74%, which is 1% below the minimum target.",
+        priorityFocusDescription = buildPriorityFocusDescription(currentAttendancePercent = 88),
         priorityFocusAction = "Schedule Catch-up",
         monthlySummaryStats = listOf(
             AttendanceSummaryStatUi(

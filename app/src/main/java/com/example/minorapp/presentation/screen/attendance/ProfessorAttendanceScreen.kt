@@ -84,9 +84,23 @@ fun ProfessorAttendanceScreen(
     var showHistoryDialog by remember { mutableStateOf(false) }
     var showSubmitConfirmationDialog by remember { mutableStateOf(false) }
 
+    val isInitialLoading = uiState.availableCourses.isEmpty() && uiState.students.isEmpty() && uiState.qrError.isNullOrBlank()
+    val isServerUnavailable = uiState.qrError
+        ?.contains("Unable to reach server", ignoreCase = true)
+        ?: false
+    val topBannerMessage = when {
+        isServerUnavailable -> "Server unavailable. Please check backend connection."
+        isInitialLoading -> "Loading class data..."
+        else -> null
+    }
+    val topBannerIsError = isServerUnavailable
+
     val topBarSubjects = uiState.availableCourses.map { it.name }.ifEmpty {
         listOf(uiState.courseCode).filter { it.isNotBlank() }
     }
+    val fixedSessionDate = "20/04/2026"
+    val fixedSessionTime = "09:00 AM - 10:00 AM"
+
     val selectedClassName = uiState.availableCourses
         .firstOrNull { it.id == uiState.selectedCourseId }
         ?.name
@@ -141,6 +155,24 @@ fun ProfessorAttendanceScreen(
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (topBannerMessage != null) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (topBannerIsError) Color(0xFFFEE4E2) else Color(0xFFDBEAFE)
+                    ) {
+                        Text(
+                            text = topBannerMessage,
+                            color = if (topBannerIsError) Color(0xFFB42318) else Color(0xFF1E40AF),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                        )
+                    }
+                }
+            }
+
             // Header Region
             item {
                 Surface(shape = RoundedCornerShape(6.dp), color = Color(0xFFDBEAFE)) {
@@ -179,15 +211,16 @@ fun ProfessorAttendanceScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = uiState.titleSubtitle, fontSize = 16.sp, color = Color(0xFF334155), lineHeight = 22.sp)
                 Spacer(modifier = Modifier.height(6.dp))
+                val hardcodedSubjectName = "Engineering Mathematics - II"
                 val subjectLabel = if (uiState.subjectCode.isNotBlank()) {
-                    "${uiState.subjectName} (${uiState.subjectCode})"
+                    "$hardcodedSubjectName (${uiState.subjectCode})"
                 } else {
-                    uiState.subjectName
+                    hardcodedSubjectName
                 }
                 Text(text = subjectLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1E3A8A))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = uiState.sessionDate, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1D4ED8))
-                Text(text = uiState.sessionTime, fontSize = 14.sp, color = Color(0xFF64748B))
+                Text(text = fixedSessionDate, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1D4ED8))
+                Text(text = fixedSessionTime, fontSize = 14.sp, color = Color(0xFF64748B))
             }
 
             // QR and Metric Cards

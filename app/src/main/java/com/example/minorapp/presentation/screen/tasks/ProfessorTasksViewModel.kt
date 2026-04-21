@@ -79,13 +79,15 @@ data class ProfessorTasksUiState(
     val showUpdateConfirmationDialog: Boolean = false,
     val updateConfirmationMessage: String? = null,
     val statusMessage: String? = null,
-    val shouldForceReauth: Boolean = false
+    val shouldForceReAuth: Boolean = false
 )
 
 data class SubmissionChecklistItemUi(
     val studentName: String,
     val rollNumber: String,
-    val submitted: Boolean
+    val submitted: Boolean,
+    val submissionDate: String? = null,
+    val submissionRef: String? = null
 )
 
 class ProfessorTasksViewModel(
@@ -332,7 +334,7 @@ class ProfessorTasksViewModel(
     }
 
     fun onForceReauthHandled() {
-        uiState = uiState.copy(shouldForceReauth = false)
+        uiState = uiState.copy(shouldForceReAuth = false)
     }
 
     fun onDeleteCommitNoticeShown() {
@@ -519,7 +521,9 @@ class ProfessorTasksViewModel(
                             SubmissionChecklistItemUi(
                                 studentName = it.studentName,
                                 rollNumber = it.rollNumber,
-                                submitted = it.submitted
+                                submitted = it.submitted,
+                                submissionDate = it.submissionDate,
+                                submissionRef = it.submissionRef
                             )
                         },
                         statusMessage = if (fromPolling) uiState.statusMessage else null
@@ -547,7 +551,7 @@ class ProfessorTasksViewModel(
         stopChecklistPolling()
         uiState = uiState.copy(
             statusMessage = message,
-            shouldForceReauth = true
+            shouldForceReAuth = true
         )
     }
 

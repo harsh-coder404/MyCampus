@@ -33,14 +33,15 @@ public class SubmissionController {
     public ApiResponse<Submission> submit(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
         Long taskId = Long.valueOf(String.valueOf(payload.get("taskId")));
         String status = String.valueOf(payload.getOrDefault("status", "SUBMITTED"));
+        String submissionRef = payload.get("submissionRef") == null ? null : String.valueOf(payload.get("submissionRef"));
 
         Submission submission;
         String authenticatedEmail = tryExtractAuthenticatedEmail(request);
         if (authenticatedEmail != null) {
-            submission = taskService.submitForAuthenticatedStudent(taskId, status, authenticatedEmail);
+            submission = taskService.submitForAuthenticatedStudent(taskId, status, authenticatedEmail, submissionRef);
         } else {
             Long studentId = Long.valueOf(String.valueOf(payload.get("studentId")));
-            submission = taskService.submit(taskId, studentId, status);
+            submission = taskService.submit(taskId, studentId, status, submissionRef);
         }
         return new ApiResponse<>("SUCCESS", "Submission saved.", submission);
     }

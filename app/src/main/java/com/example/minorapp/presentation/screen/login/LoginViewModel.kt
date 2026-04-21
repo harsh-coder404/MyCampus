@@ -100,6 +100,10 @@ class LoginViewModel(
 
 
     fun onLoginRequested(onValidRequest: (LoginUiState) -> Unit) {
+        if (uiState.isAuthenticating) {
+            return
+        }
+
         if (uiState.email.isBlank() || uiState.password.isBlank()) {
             uiState = uiState.copy(
                 errorMessage = "Please enter email and security key.",
@@ -117,9 +121,26 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            val authenticated = authenticate()
+            val authenticated = try {
+                authenticate()
+            } catch (_: Exception) {
+                uiState = uiState.copy(
+                    errorMessage = "Authentication service is currently unavailable.",
+                    authStatusMessage = null,
+                    credentialsVerified = false,
+                    username = null,
+                    branch = null,
+                    batch = null
+                )
+                false
+            } finally {
+                if (uiState.isAuthenticating) {
+                    uiState = uiState.copy(isAuthenticating = false)
+                }
+            }
+
             if (authenticated) {
-                onValidRequest(uiState)
+                onValidRequest(uiState.copy(isAuthenticating = false))
             }
         }
     }

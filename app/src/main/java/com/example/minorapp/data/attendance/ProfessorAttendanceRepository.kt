@@ -21,6 +21,7 @@ data class ProfessorCourseData(
 
 data class ProfessorAttendanceSnapshot(
     val courseCode: String,
+    val subjectName: String,
     val subjectCode: String,
     val titleSubtitle: String,
     val sessionDate: String,
@@ -139,6 +140,7 @@ class BackendProfessorAttendanceRepository(
                 ?: return@withContext Result.failure(IllegalStateException("Malformed roster response."))
 
             val courseName = data.optString("courseName").ifBlank { "Course $courseId" }
+            val seededCourseCode = data.optString("courseCode").trim()
             val studentsArray = data.optJSONArray("students")
             val students = buildList {
                 if (studentsArray != null) {
@@ -158,10 +160,11 @@ class BackendProfessorAttendanceRepository(
             Result.success(
                 ProfessorAttendanceSnapshot(
                     courseCode = courseName,
-                    subjectCode = data.optString("courseCode").ifBlank { "" },
+                    subjectName = courseName,
+                    subjectCode = seededCourseCode,
                     titleSubtitle = courseName,
-                    sessionDate = "Today",
-                    sessionTime = "Live",
+                    sessionDate = "",
+                    sessionTime = "",
                     totalEnrolled = data.optInt("totalEnrolled", students.size),
                     basePresentCount = 0,
                     baseMarkedCount = 0,

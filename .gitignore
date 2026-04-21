@@ -13,3 +13,34 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local documentation drafts generated in this workspace
+app/README.md
+docs/ARCHITECTURE.md
+docs/BACKEND_WORKFLOW.md
+docs/ATTENDANCE_WORKFLOW.md
+docs/TASK_WORKFLOW.md
+docs/APP_WORKFLOW.md
+docs/API_REFERENCE.md
+docs/TROUBLESHOOTING.md
+docs/TESTING_AND_SCRIPTS.md
+docs/SCREENSHOTS.md
+docs/README.md
+
+# Ignore logs, reports, and text files not related to build/source
+*.log
+*.txt
+*.report
+*.json
+*.csv
+*.bak
+*.tmp
+netstat_*.txt
+qr_cycle_report.*
+spring-boot-run.log
+app-build.log
+jar-run.*.log
+backend/spring-boot-run.log
+backend/jar-run.*.log
+backend/netstat_*.txt
+backend/qr_cycle_report.*

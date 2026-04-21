@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.material3.SelectableDates
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,9 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.LocalContentColor
 import com.example.minorapp.data.tasks.ProfessorTaskPriority
 import com.example.minorapp.domain.constants.DummyDataConstants
 import com.example.minorapp.presentation.common.AppBlueTheme
@@ -78,7 +81,9 @@ fun ProfessorTasksScreen(
     var showClassTargetDropdown by remember { mutableStateOf(false) }
     var showEditClassTargetDropdown by remember { mutableStateOf(false) }
     var showChecklistTaskDropdown by remember { mutableStateOf(false) }
+    var selectedSubmissionItem by remember { mutableStateOf<SubmissionChecklistItemUi?>(null) }
     var pendingDeleteTaskId by remember { mutableStateOf<String?>(null) }
+    val uriHandler = LocalUriHandler.current
     val todayUtcStartMillis = remember {
         Instant.now().atOffset(ZoneOffset.UTC).toLocalDate()
             .atStartOfDay()
@@ -344,6 +349,34 @@ fun ProfessorTasksScreen(
         )
     }
 
+    selectedSubmissionItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { selectedSubmissionItem = null },
+            title = { Text("Submitted Work") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Student: ${item.studentName}")
+                    Text("Roll No: ${item.rollNumber}")
+                    Text("Submitted On: ${item.submissionDate ?: "-"}")
+                    Text("Reference: ${item.submissionRef ?: "Not provided"}")
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val ref = item.submissionRef.orEmpty()
+                        if (ref.startsWith("http://") || ref.startsWith("https://")) {
+                            uriHandler.openUri(ref)
+                        }
+                        selectedSubmissionItem = null
+                    }
+                ) {
+                    Text(if ((item.submissionRef ?: "").startsWith("http")) "Open Link" else "Close")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             MyCampusTopBar(
@@ -450,9 +483,30 @@ fun ProfessorTasksScreen(
                     shape = RoundedCornerShape(16.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
+                    CompositionLocalProvider(LocalContentColor provides Color(0xFF0F172A)) {
+                        val assignmentFieldColors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF2563EB),
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color(0xFFF8FAFC),
+                            focusedTextColor = Color(0xFF0F172A),
+                            unfocusedTextColor = Color(0xFF0F172A),
+                            disabledTextColor = Color(0xFF0F172A),
+                            focusedLabelColor = Color(0xFF64748B),
+                            unfocusedLabelColor = Color(0xFF64748B),
+                            disabledLabelColor = Color(0xFF64748B),
+                            focusedPlaceholderColor = Color(0xFFA1A1AA),
+                            unfocusedPlaceholderColor = Color(0xFFA1A1AA),
+                            disabledPlaceholderColor = Color(0xFFA1A1AA),
+                            focusedTrailingIconColor = Color(0xFF64748B),
+                            unfocusedTrailingIconColor = Color(0xFF64748B),
+                            disabledTrailingIconColor = Color(0xFF64748B),
+                            cursorColor = Color(0xFF2563EB)
+                        )
+
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
@@ -490,18 +544,11 @@ fun ProfessorTasksScreen(
                             value = uiState.title,
                             onValueChange = onTitleChange,
                             placeholder = { Text("e.g., Quantum Mechanics Thesis", color = Color(0xFFA1A1AA)) },
+                            textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF0F172A)),
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF2563EB),
-                                unfocusedBorderColor = Color(0xFFE2E8F0),
-                                unfocusedContainerColor = Color(0xFFF8FAFC),
-                                focusedContainerColor = Color.White,
-                                focusedTextColor = Color(0xFF0F172A),
-                                unfocusedTextColor = Color(0xFF0F172A),
-                                cursorColor = Color(0xFF2563EB)
-                            )
+                            colors = assignmentFieldColors
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -519,19 +566,12 @@ fun ProfessorTasksScreen(
                             value = uiState.description,
                             onValueChange = onDescriptionChange,
                             placeholder = { Text("Outline the core objectives and\nsubmission requirements...", color = Color(0xFFA1A1AA)) },
+                            textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF0F172A)),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(100.dp),
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF2563EB),
-                                unfocusedBorderColor = Color(0xFFE2E8F0),
-                                unfocusedContainerColor = Color(0xFFF8FAFC),
-                                focusedContainerColor = Color.White,
-                                focusedTextColor = Color(0xFF0F172A),
-                                unfocusedTextColor = Color(0xFF0F172A),
-                                cursorColor = Color(0xFF2563EB)
-                            )
+                            colors = assignmentFieldColors
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -552,6 +592,7 @@ fun ProfessorTasksScreen(
                                     value = uiState.deadlineDate,
                                     onValueChange = {},
                                     placeholder = { Text("mm/dd/yy", color = Color(0xFFA1A1AA)) },
+                                    textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF0F172A)),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable { showDeadlinePicker = true },
@@ -568,14 +609,7 @@ fun ProfessorTasksScreen(
                                             )
                                         }
                                     },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFF2563EB),
-                                        unfocusedBorderColor = Color(0xFFE2E8F0),
-                                        unfocusedContainerColor = Color(0xFFF8FAFC),
-                                        focusedContainerColor = Color.White,
-                                        focusedTextColor = Color(0xFF0F172A),
-                                        unfocusedTextColor = Color(0xFF0F172A)
-                                    )
+                                    colors = assignmentFieldColors
                                 )
                             }
                             // Category
@@ -593,6 +627,7 @@ fun ProfessorTasksScreen(
                                         value = uiState.category,
                                         onValueChange = {},
                                         readOnly = true,
+                                        textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF0F172A)),
                                         modifier = Modifier.fillMaxWidth(),
                                         placeholder = { Text("Select", color = Color(0xFFA1A1AA)) },
                                         shape = RoundedCornerShape(8.dp),
@@ -601,14 +636,7 @@ fun ProfessorTasksScreen(
                                                 Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
                                             }
                                         },
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = Color(0xFFE2E8F0),
-                                            unfocusedBorderColor = Color(0xFFE2E8F0),
-                                            unfocusedContainerColor = Color(0xFFF1F5F9),
-                                            focusedContainerColor = Color(0xFFF1F5F9),
-                                            focusedTextColor = Color(0xFF0F172A),
-                                            unfocusedTextColor = Color(0xFF0F172A)
-                                        )
+                                        colors = assignmentFieldColors
                                     )
                                     DropdownMenu(
                                         expanded = uiState.isCategoryDropdownExpanded,
@@ -617,7 +645,7 @@ fun ProfessorTasksScreen(
                                     ) {
                                         uiState.categoryOptions.forEach { option ->
                                             DropdownMenuItem(
-                                                text = { Text(option) },
+                                                text = { Text(option, color = Color(0xFF0F172A)) },
                                                 onClick = { onCategorySelect(option) }
                                             )
                                         }
@@ -646,6 +674,7 @@ fun ProfessorTasksScreen(
                                     value = selectedClassText,
                                     onValueChange = {},
                                     readOnly = true,
+                                    textStyle = androidx.compose.ui.text.TextStyle(color = Color(0xFF0F172A)),
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     trailingIcon = {
@@ -653,14 +682,7 @@ fun ProfessorTasksScreen(
                                             Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color(0xFF64748B))
                                         }
                                     },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFE2E8F0),
-                                        unfocusedBorderColor = Color(0xFFE2E8F0),
-                                        unfocusedContainerColor = Color(0xFFF1F5F9),
-                                        focusedContainerColor = Color(0xFFF1F5F9),
-                                        focusedTextColor = Color(0xFF0F172A),
-                                        unfocusedTextColor = Color(0xFF0F172A)
-                                    )
+                                    colors = assignmentFieldColors
                                 )
                                 DropdownMenu(
                                     expanded = showClassTargetDropdown,
@@ -669,7 +691,7 @@ fun ProfessorTasksScreen(
                                 ) {
                                     uiState.classTargets.forEach { classTarget ->
                                         DropdownMenuItem(
-                                            text = { Text(classTarget.name) },
+                                            text = { Text(classTarget.name, color = Color(0xFF0F172A)) },
                                             onClick = {
                                                 onClassTargetSelected(classTarget.id)
                                                 showClassTargetDropdown = false
@@ -710,6 +732,7 @@ fun ProfessorTasksScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Deploy Assignment", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
                         }
+                    }
                     }
                 }
             }
@@ -888,10 +911,17 @@ fun ProfessorTasksScreen(
                                                 fontSize = 12.sp
                                             )
                                         }
-                                        Checkbox(
-                                            checked = row.submitted,
-                                            onCheckedChange = null
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Checkbox(
+                                                checked = row.submitted,
+                                                onCheckedChange = null
+                                            )
+                                            if (row.submitted) {
+                                                TextButton(onClick = { selectedSubmissionItem = row }) {
+                                                    Text("View Work", fontSize = 12.sp)
+                                                }
+                                            }
+                                        }
                                     }
                                     HorizontalDivider(color = Color(0xFFF1F5F9))
                                 }

@@ -53,7 +53,9 @@ data class ProfessorClassTargetData(
 data class SubmissionChecklistItemData(
     val studentName: String,
     val rollNumber: String,
-    val submitted: Boolean
+    val submitted: Boolean,
+    val submissionDate: String? = null,
+    val submissionRef: String? = null
 )
 
 sealed class ProfessorTaskCreateResult {
@@ -259,7 +261,9 @@ class BackendProfessorTasksRepository(
                                     SubmissionChecklistItemData(
                                         studentName = row.optString("name", "Student"),
                                         rollNumber = row.optString("rollNumber", "-"),
-                                        submitted = row.optBoolean("submitted", false)
+                                        submitted = row.optBoolean("submitted", false),
+                                        submissionDate = row.optString("submissionDate").takeIf { it.isNotBlank() },
+                                        submissionRef = row.optString("submissionRef").takeIf { it.isNotBlank() }
                                     )
                                 )
                             }

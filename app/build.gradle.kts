@@ -16,9 +16,20 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "AUTH_BASE_URL", "\"http://10.0.2.2:8081/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "device"
+    productFlavors {
+        create("emulator") {
+            dimension = "device"
+            buildConfigField("String", "AUTH_BASE_URL", "\"http://10.0.2.2:8081/\"")
+        }
+        create("phone") {
+            dimension = "device"
+            buildConfigField("String", "AUTH_BASE_URL", "\"http://10.234.183.177:8081/\"")
+        }
     }
 
     buildTypes {

@@ -1,6 +1,5 @@
 package com.example.minorapp.presentation.screen.attendance
 
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
@@ -51,31 +50,21 @@ fun AttendanceScreen(
     val displayedSummaryStats = uiState.activeSummaryStats.take(3)
     val context = LocalContext.current
     var inlineDuplicateMessage by remember { mutableStateOf<String?>(null) }
-    val deviceId = remember(context) {
-        runCatching { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) }.getOrNull()
-    }
     val qrLauncher = rememberLauncherForActivityResult(ScanContract()) { result ->
         val payload = result.contents
         if (!payload.isNullOrBlank()) {
-            onScanQrPayload(payload, deviceId)
+            onScanQrPayload(payload, null)
         }
     }
 
     LaunchedEffect(uiState.qrResultMessage) {
         val message = uiState.qrResultMessage ?: return@LaunchedEffect
-        val isSuccess = message.contains("success", ignoreCase = true) ||
-            message.contains("marked", ignoreCase = true)
         if (message.contains("already marked", ignoreCase = true)) {
             inlineDuplicateMessage = message
         } else if (message.contains("success", ignoreCase = true)) {
             inlineDuplicateMessage = null
         }
-        val toastText = if (isSuccess) {
-            "Attendance marking passed"
-        } else {
-            "Attendance marking failed"
-        }
-        Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         onQrResultMessageShown()
     }
 
